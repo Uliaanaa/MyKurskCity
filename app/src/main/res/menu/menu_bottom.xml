@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+<item
+    android:id="@+id/home"
+    android:icon="@drawable/bottom_btn1"
+    android:title="Домой"
+    app:cnb_backgroundColor="@color/blue"
+    app:cnb_iconColor="@color/white"
+    />
+    <item
+        android:id="@+id/explorer"
+        android:icon="@drawable/bottom_btn2"
+        android:title="Маршруты"
+        app:cnb_backgroundColor="@color/blue"
+        app:cnb_iconColor="@color/white"
+        />
+    <item
+        android:id="@+id/attractions"
+        android:icon="@drawable/attractions"
+        android:title="Достопримечательности"
+        app:cnb_backgroundColor="@color/blue"
+        app:cnb_iconColor="@color/white"
+        />
+    <item
+        android:id="@+id/cart"
+        android:icon="@drawable/bottom_btn3"
+        android:title="Избранное"
+        app:cnb_backgroundColor="@color/blue"
+        app:cnb_iconColor="@color/white"
+        />
+    <item
+        android:id="@+id/profile"
+        android:icon="@drawable/bottom_btn4"
+        android:title="Профиль"
+        app:cnb_backgroundColor="@color/blue"
+        app:cnb_iconColor="@color/white"
+        />
+</menu>
