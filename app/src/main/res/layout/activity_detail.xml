@@ -317,7 +317,7 @@
             android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:background="@drawable/blue_bg"
-            android:text="Add to cart"
+            android:text="Посмотреть на карте"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"
