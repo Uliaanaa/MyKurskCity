@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
     tools:context=".Activity.Detail_AttractionActivity">
     <ScrollView
         android:id="@+id/scrollView3"
@@ -138,13 +139,17 @@
                                 android:stepSize="0.1"
                                 android:transformPivotX="0dp" />
 
+
+
                             <TextView
-                                android:id="@+id/ratingTxt"
+                                android:id="@+id/allbtn"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:layout_gravity="center_vertical"
-                                android:textColor="@color/darkBlue"
-                                android:textSize="16sp" />
+                                android:layout_gravity="end|center_vertical"
+                                android:text="Посмотреть отзывы"
+                                android:textColor="@color/blue"
+                                android:textSize="16sp"
+                                android:paddingEnd="16dp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -212,11 +217,15 @@
                             android:textColor="@color/darkBlue"
                             android:textSize="16sp" />
 
+
+
                     </LinearLayout>
+
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
     </ScrollView>
+
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -240,6 +249,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -3,6 +3,7 @@ package com.example.myapplication.Adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -10,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.myapplication.Activity.DetailActivity;
+import com.example.myapplication.Activity.Detail_AttractionActivity;
+import com.example.myapplication.Domain.ItemAttractions;
 import com.example.myapplication.Domain.ItemRoute;
 import com.example.myapplication.databinding.ViewholderExplorerBinding;
 
@@ -34,18 +37,21 @@ public class ExplorerAdapter extends RecyclerView.Adapter<ExplorerAdapter.Viewho
         context = parent.getContext();
         return new Viewholder(binding);
     }
-
     @Override
     public void onBindViewHolder(@NonNull ExplorerAdapter.Viewholder holder, int position) {
         ItemRoute currentItem = currentItems.get(position);
-
         holder.binding.titleTxt.setText(currentItem.getTitle());
         holder.binding.adressTxt.setText(currentItem.getAddress());
-        holder.binding.scoreTxt.setText(String.valueOf(currentItem.getScore()));
 
-        Glide.with(context)
-                .load(currentItem.getPic())
-                .into(holder.binding.pic);
+        if (currentItem.getScore() > 0) {
+            holder.binding.scoreTxt.setText(String.format("%.1f", currentItem.getScore()));
+            holder.binding.imageView6.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.scoreTxt.setText("Нет отзывов"); // Если рейтинг равен 0
+            holder.binding.imageView6.setVisibility(View.GONE);
+        }
+
+        Glide.with(context).load(currentItem.getPic()).into(holder.binding.pic);
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, DetailActivity.class);

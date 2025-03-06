@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 
 import androidx.activity.EdgeToEdge;
@@ -86,29 +87,77 @@ public class ExplorerActivity extends BaseActivity {
     }
 
     private void initRoute() {
-        DatabaseReference myRef=database.getReference("Route");
+        DatabaseReference routeRef = database.getReference("Route");
+        DatabaseReference reviewsRef = database.getReference("reviews");
         binding.progressBarExplorer.setVisibility(View.VISIBLE);
 
         ArrayList<ItemRoute> list = new ArrayList<>();
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        routeRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if(snapshot.exists()) {
-                    for(DataSnapshot issue:snapshot.getChildren()) {
-                        list.add(issue.getValue(ItemRoute.class));
+                if (snapshot.exists()) {
+                    for (DataSnapshot issue : snapshot.getChildren()) {
+                        ItemRoute item = issue.getValue(ItemRoute.class);
+                        if (item != null) {
+                            list.add(item);
+                        }
                     }
-                    if(!list.isEmpty()) {
-                        binding.RecyclerViewExplorer.setLayoutManager(new LinearLayoutManager(ExplorerActivity.this,LinearLayoutManager.VERTICAL,false));
-                        adapter=new ExplorerAdapter(list);
-                        binding.RecyclerViewExplorer.setAdapter(adapter);
-                    }
+
+                    // Загружаем отзывы для расчета рейтинга
+                    reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot reviewsSnapshot) {
+                            for (ItemRoute route : list) {
+                                double totalRating = 0;
+                                int reviewCount = 0;
+
+                                // Проходим по всем отзывам
+                                for (DataSnapshot review : reviewsSnapshot.getChildren()) {
+                                    String productId = review.child("productId").getValue(String.class);
+                                    Double rating = review.child("rating").getValue(Double.class);
+
+                                    // Если productId совпадает с id маршрута
+                                    if (productId != null && productId.equals(route.getTitle()) && rating != null) {
+                                        totalRating += rating;
+                                        reviewCount++;
+                                    }
+                                }
+
+                                // Рассчитываем средний рейтинг
+                                if (reviewCount > 0) {
+                                    double averageRating = totalRating / reviewCount;
+                                    route.setScore(averageRating); // Обновляем рейтинг маршрута
+                                } else {
+                                    route.setScore(0); // Если отзывов нет, рейтинг = 0
+                                }
+                            }
+
+                            // Обновляем RecyclerView
+                            if (!list.isEmpty()) {
+                                binding.RecyclerViewExplorer.setLayoutManager(new LinearLayoutManager(ExplorerActivity.this, LinearLayoutManager.VERTICAL, false));
+                                adapter = new ExplorerAdapter(list);
+                                binding.RecyclerViewExplorer.setAdapter(adapter);
+                                adapter.notifyDataSetChanged();
+                            }
+                            binding.progressBarExplorer.setVisibility(View.GONE);
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("Firebase", "Ошибка загрузки отзывов: " + error.getMessage());
+                            binding.progressBarExplorer.setVisibility(View.GONE);
+                        }
+                    });
+                } else {
+                    Log.d("Firebase", "Нет данных о маршрутах.");
                     binding.progressBarExplorer.setVisibility(View.GONE);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-
+                Log.e("Firebase", "Ошибка загрузки маршрутов: " + error.getMessage());
+                binding.progressBarExplorer.setVisibility(View.GONE);
             }
         });
     }

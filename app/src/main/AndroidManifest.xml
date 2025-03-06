@@ -17,13 +17,26 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
         <activity
+            android:name=".Activity.AdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.FormActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.ReviewsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.Detail_EventActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.Detail_RouteActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Activity.EventActivity"
+            android:exported="false" />
+        <activity
             android:name=".Activity.MapRouteActivity"
-            android:exported="false" >
-
-        </activity>
-
-
-
+            android:exported="false" />
         <activity
             android:name=".Activity.MapActivity"
             android:exported="false" />
@@ -69,6 +82,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />

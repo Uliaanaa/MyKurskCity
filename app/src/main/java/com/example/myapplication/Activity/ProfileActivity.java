@@ -83,6 +83,15 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
+        binding.adminPanelBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Переход на экран с необработанными заявками
+                Intent intent = new Intent(ProfileActivity.this, AdminActivity.class);
+                startActivity(intent);
+            }
+        });
+
         ChipNavigationBar chipNavigationBar = findViewById(R.id.menu);
         chipNavigationBar.setOnItemSelectedListener(new ChipNavigationBar.OnItemSelectedListener() {
             @Override
@@ -163,18 +172,25 @@ public class ProfileActivity extends AppCompatActivity {
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         String username = snapshot.child("username").getValue().toString();
                         String profileImage = snapshot.child("profileImage").getValue().toString();
+                        String role = snapshot.child("role").getValue(String.class); // Получаем роль пользователя
 
                         binding.usernameTv.setText(username);
 
-                        if(!profileImage.isEmpty()) {
+                        if (!profileImage.isEmpty()) {
                             Glide.with(ProfileActivity.this).load(profileImage).into(binding.profileImage);
+                        }
 
+                        // Проверка роли
+                        if ("admin".equals(role)) {
+                            binding.adminPanelBtn.setVisibility(View.VISIBLE); // Показываем кнопку для администратора
+                        } else {
+                            binding.adminPanelBtn.setVisibility(View.GONE); // Скрываем кнопку
                         }
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-
+                        // Обработка ошибки
                     }
                 });
     }
