@@ -1,11 +1,13 @@
 package com.example.myapplication.Domain;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class ItemRoute implements Serializable {
     private String title;
     private String address;
     private String description;
+    private String detail;
     private String pic;
     private String duration;
     private String timeTour;
@@ -17,9 +19,12 @@ public class ItemRoute implements Serializable {
     private String bed;
     private String distance;
     private double score;
+    private List<List<Double>> points; // Поле для хранения координат
 
-    public ItemRoute () {
+    public ItemRoute() {
     }
+
+    // Геттеры и сеттеры для всех полей
 
     public String getTitle() {
         return title;
@@ -45,6 +50,14 @@ public class ItemRoute implements Serializable {
         this.description = description;
     }
 
+    public String getDetail() {
+        return detail;
+    }
+
+    public void setDetail(String detail) {
+        this.detail = detail;
+    }
+
     public String getPic() {
         return pic;
     }
@@ -57,7 +70,7 @@ public class ItemRoute implements Serializable {
         return duration;
     }
 
-    public void setDuraion(String duration) {
+    public void setDuration(String duration) {
         this.duration = duration;
     }
 
@@ -131,5 +144,23 @@ public class ItemRoute implements Serializable {
 
     public void setScore(double score) {
         this.score = score;
+    }
+
+    public List<List<Double>> getPoints() {
+        return points;
+    }
+
+    public void setPoints(List<List<Double>> points) {
+        this.points = points;
+    }
+
+    // Метод для получения координат в виде списка пар (широта, долгота)
+    public List<List<Double>> getCoordinates() {
+        return points;
+    }
+
+    // Метод для добавления новой координаты
+    public void addCoordinate(double latitude, double longitude) {
+        this.points.add(List.of(latitude, longitude));
     }
 }

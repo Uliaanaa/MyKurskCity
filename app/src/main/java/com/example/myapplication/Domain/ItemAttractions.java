@@ -3,6 +3,7 @@ package com.example.myapplication.Domain;
 import java.io.Serializable;
 
 public class ItemAttractions implements Serializable {
+    private String id; // id достопримечательности (название)
     private String title;
     private String address;
     private String description;
@@ -12,7 +13,16 @@ public class ItemAttractions implements Serializable {
     private String bed;
     private double score;
 
-    public ItemAttractions () {
+    public ItemAttractions() {
+    }
+
+    // Геттеры и сеттеры
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getTitle() {
@@ -79,4 +89,3 @@ public class ItemAttractions implements Serializable {
         this.score = score;
     }
 }
-

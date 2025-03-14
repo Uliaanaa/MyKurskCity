@@ -53,7 +53,7 @@
                         app:srcCompat="@drawable/back" />
 
                     <ImageView
-                        android:id="@+id/imageView8"
+                        android:id="@+id/favIcon"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:layout_marginEnd="24dp"
@@ -139,13 +139,17 @@
                                 android:stepSize="0.1"
                                 android:transformPivotX="0dp" />
 
+
+
                             <TextView
-                                android:id="@+id/ratingTxt"
+                                android:id="@+id/allbtn"
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
-                                android:layout_gravity="center_vertical"
-                                android:textColor="@color/darkBlue"
-                                android:textSize="16sp" />
+                                android:layout_gravity="end|center_vertical"
+                                android:text="Посмотреть отзывы"
+                                android:textColor="@color/blue"
+                                android:textSize="16sp"
+                                android:paddingEnd="16dp" />
                         </LinearLayout>
 
                         <LinearLayout
@@ -317,7 +321,7 @@
             android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:background="@drawable/blue_bg"
-            android:text="Посмотреть на карте"
+            android:text="Посмотреть подобности"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"

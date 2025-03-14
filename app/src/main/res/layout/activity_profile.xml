@@ -82,6 +82,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edit_password" />
 
+    <Button
+        android:id="@+id/admin_panel_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Панель администратора"
+        android:backgroundTint="@color/darkBlue"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/save_changes_btn" />
+
     <com.ismaeldivita.chipnavigation.ChipNavigationBar
         android:id="@+id/menu"
         android:layout_width="match_parent"

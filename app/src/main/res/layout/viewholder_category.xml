@@ -31,4 +31,5 @@
         tools:visibility="visible"
         android:textSize="15sp"
         android:textStyle="bold"/>
+
 </LinearLayout>

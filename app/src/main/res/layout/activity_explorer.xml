@@ -8,7 +8,6 @@
     android:background="@color/white"
     tools:context=".Activity.ExplorerActivity">
 
-    <!-- Строка поиска вверху -->
 
     <ScrollView
         android:layout_width="match_parent"

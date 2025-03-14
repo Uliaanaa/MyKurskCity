@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,6 +21,7 @@ import com.example.myapplication.databinding.ActivityAttractionsBinding;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.ismaeldivita.chipnavigation.ChipNavigationBar;
 
@@ -28,12 +30,14 @@ import java.util.ArrayList;
 public class AttractionsActivity extends BaseActivity {
     ActivityAttractionsBinding binding;
     AttractionsAdapter adapter;
+    private DatabaseReference database;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityAttractionsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        database = FirebaseDatabase.getInstance().getReference();
         initRoute();
 
         binding.editTextText.addTextChangedListener(new TextWatcher() {
@@ -50,6 +54,12 @@ public class AttractionsActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {}
+        });
+
+        CardView fabAdd = findViewById(R.id.fabAdd);
+        fabAdd.setOnClickListener(view -> {
+            Intent intent = new Intent(getApplicationContext(), FormActivity.class);
+            startActivity(intent);
         });
 
 
@@ -82,35 +92,77 @@ public class AttractionsActivity extends BaseActivity {
     }
 
     private void initRoute() {
-        DatabaseReference myRef = database.getReference("Attractions");
+        DatabaseReference attractionsRef = database.child("Attractions");
+        DatabaseReference reviewsRef = database.child("reviews");
         binding.progressBarAttractions.setVisibility(View.VISIBLE);
 
         ArrayList<ItemAttractions> list = new ArrayList<>();
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        attractionsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     for (DataSnapshot issue : snapshot.getChildren()) {
                         ItemAttractions item = issue.getValue(ItemAttractions.class);
-                        list.add(item);
-                        Log.d("Firebase", "Item: " + item.getTitle());
+                        if (item != null) {
+                            list.add(item);
+                        }
                     }
-                    if (!list.isEmpty()) {
-                        binding.RecyclerViewAttractions.setLayoutManager(new LinearLayoutManager(AttractionsActivity.this, LinearLayoutManager.VERTICAL, false));
-                        adapter = new AttractionsAdapter(list);
-                        binding.RecyclerViewAttractions.setAdapter(adapter);
-                        adapter.notifyDataSetChanged();
-                    }
-                    binding.progressBarAttractions.setVisibility(View.GONE);
-                    binding.RecyclerViewAttractions.setVisibility(View.VISIBLE);
+
+                    // Загружаем отзывы для расчета рейтинга
+                    reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot reviewsSnapshot) {
+                            for (ItemAttractions attraction : list) {
+                                double totalRating = 0;
+                                int reviewCount = 0;
+
+                                // Проходим по всем отзывам
+                                for (DataSnapshot review : reviewsSnapshot.getChildren()) {
+                                    String productId = review.child("productId").getValue(String.class);
+                                    Double rating = review.child("rating").getValue(Double.class);
+
+                                    // Если productId совпадает с id достопримечательности
+                                    if (productId != null && productId.equals(attraction.getTitle()) && rating != null) {
+                                        totalRating += rating;
+                                        reviewCount++;
+                                    }
+                                }
+
+                                // Рассчитываем средний рейтинг
+                                double averageRating = reviewCount > 0 ? totalRating / reviewCount : 0;
+                                attraction.setScore(averageRating); // Обновляем рейтинг достопримечательности
+
+                                // Логирование для проверки
+                                Log.d("AttractionRating", "Attraction: " + attraction.getTitle() + ", Rating: " + averageRating);
+                            }
+
+                            // Обновляем RecyclerView
+                            if (!list.isEmpty()) {
+                                binding.RecyclerViewAttractions.setLayoutManager(new LinearLayoutManager(AttractionsActivity.this, LinearLayoutManager.VERTICAL, false));
+                                adapter = new AttractionsAdapter(list);
+                                binding.RecyclerViewAttractions.setAdapter(adapter);
+                                adapter.notifyDataSetChanged();
+                            }
+                            binding.progressBarAttractions.setVisibility(View.GONE);
+                            binding.RecyclerViewAttractions.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Log.e("Firebase", "Ошибка загрузки отзывов: " + error.getMessage());
+                            binding.progressBarAttractions.setVisibility(View.GONE);
+                        }
+                    });
                 } else {
-                    Log.d("Firebase", "No data found.");
+                    Log.d("Firebase", "Нет данных о достопримечательностях.");
+                    binding.progressBarAttractions.setVisibility(View.GONE);
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
-                Log.e("Firebase", "Database error: " + error.getMessage());
+                Log.e("Firebase", "Ошибка загрузки достопримечательностей: " + error.getMessage());
+                binding.progressBarAttractions.setVisibility(View.GONE);
             }
         });
     }

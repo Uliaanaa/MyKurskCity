@@ -42,6 +42,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.maps.android.SphericalUtil;
+
 
 import java.util.ArrayList;
 
@@ -128,9 +130,21 @@ public class MapRouteActivity extends AppCompatActivity implements OnMapReadyCal
         dialog.setMessage("Маршрут генерируется, подождите пожалуйста");
         dialog.show();
 
+        // Рассчитываем расстояние между двумя точками в метрах
+        double distanceInMeters = SphericalUtil.computeDistanceBetween(userLocation, destinationLocation);
+
+        // Определяем режим передвижения
+        AbstractRouting.TravelMode travelMode;
+        if (distanceInMeters <= 3000) { // 3000 метров = 3 км
+            travelMode = AbstractRouting.TravelMode.WALKING; // Пешеходный режим
+        } else {
+            travelMode = AbstractRouting.TravelMode.DRIVING; // Автомобильный режим
+        }
+
+        // Строим маршрут с выбранным режимом
         RouteDrawing routeDrawing = new RouteDrawing.Builder()
                 .context(getApplicationContext())
-                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .travelMode(travelMode) // Используем выбранный режим
                 .withListener(MapRouteActivity.this)
                 .alternativeRoutes(true)
                 .waypoints(userLocation, destinationLocation)

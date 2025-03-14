@@ -2,5 +2,9 @@
     <string name="app_name">Вдоль Соловьиного Края</string>
     <string name="introTitle">Explorer the <font color="#3F95EC">\n World </font> with us</string>
     <string name="subIntro">Lorem ipsum dolor sit amet, consectetur \n adipiscing elit, sed do eiusmod tempor. </string>
+    <string-array name="category_items">
+        <item>Достопримечательности</item>
+        <item>Маршруты</item>
+    </string-array>
 
 </resources>
