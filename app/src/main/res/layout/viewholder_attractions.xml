@@ -21,6 +21,17 @@
         app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.circleImageView"
         tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
+    <CheckBox
+        android:id="@+id/checkBox"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:button="@drawable/round_checkbox"
+        android:buttonTintMode="@color/darkBlue"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent" />
     <TextView
         android:id="@+id/titleTxt"
         android:layout_width="200dp"
