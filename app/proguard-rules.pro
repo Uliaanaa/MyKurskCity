@@ -19,3 +19,14 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# Общие правила для Android
+-keepattributes *Annotation*
+
+# Сохраняем аннотации и поля, нужные Gson
+-keep class com.google.gson.** { *; }
+-keepclassmembers class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Сохраняем твои модельные классы
+-keep class com.example.solovinyykray.** { *; }
