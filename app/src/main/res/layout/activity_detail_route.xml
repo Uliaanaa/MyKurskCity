@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity.Detail_RouteActivity">
+    tools:context="com.solovinykray.solovinyykray.Activity.Detail_RouteActivity">
 
     <ScrollView
         android:id="@+id/scrollView3"

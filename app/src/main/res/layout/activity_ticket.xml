@@ -6,7 +6,7 @@
     android:background="@color/lightGray"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity.TicketActivity">
+    tools:context="com.solovinykray.solovinyykray.Activity.TicketActivity">
 
     <ScrollView
         android:layout_width="match_parent"

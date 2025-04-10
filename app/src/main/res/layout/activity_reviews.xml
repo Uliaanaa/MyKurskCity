@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:background="@color/white"
     android:layout_height="match_parent"
-    tools:context=".Activity.ReviewsActivity">
+    tools:context="com.solovinykray.solovinyykray.Activity.ReviewsActivity">
 
     <RatingBar
         android:id="@+id/reviewRatingBar"

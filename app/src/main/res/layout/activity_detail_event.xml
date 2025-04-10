@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Activity.Detail_EventActivity">
+    tools:context="com.solovinykray.solovinyykray.Activity.Detail_EventActivity">
 
     <ScrollView
         android:id="@+id/scrollView3"
@@ -290,7 +290,7 @@
             android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:background="@drawable/blue_bg"
-            android:text="Посмотреть подобности"
+            android:text="Посмотреть подробности"
             android:textColor="@color/white"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"

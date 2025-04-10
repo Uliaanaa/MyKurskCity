@@ -9,7 +9,7 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="com.example.solovinyykray" />
+                  <option name="appId" value="com.solovinyykray.solovinyykray" />
                   <option name="mobileSdkAppId" value="1:793557638775:android:a361c5e083f15da3bfb072" />
                   <option name="projectId" value="myapp-productionn" />
                   <option name="projectNumber" value="793557638775" />
