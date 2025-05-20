@@ -34,12 +34,15 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            app:layout_constraintTop_toBottomOf="@id/category_spinner"
             >
+
+
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/RecyclerViewAttractions"
                 android:layout_width="match_parent"
-                android:layout_height="780dp"
+                android:layout_height="720dp"
                 android:paddingBottom="50dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent" />

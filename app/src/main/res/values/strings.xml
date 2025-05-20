@@ -6,5 +6,9 @@
         <item>Достопримечательности</item>
         <item>Маршруты</item>
     </string-array>
+    <string-array name="request_items">
+        <item>Одобренные</item>
+        <item>Отклоненные</item>
+    </string-array>
 
 </resources>

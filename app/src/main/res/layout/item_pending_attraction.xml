@@ -2,15 +2,22 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"
         android:layout_height="150dp"
+        android:layout_margin="8dp"
+        android:layout_marginStart="4dp"
         android:scaleType="centerCrop"
-        android:layout_marginBottom="8dp" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.circleImageView"
+        tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
     <TextView
         android:id="@+id/title"
@@ -36,13 +43,26 @@
         android:textSize="14sp"
         android:textColor="@color/Gray" />
 
+    <EditText
+        android:id="@+id/rejectComment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Укажите причину отклонения"
+        android:visibility="gone"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/edit_text_background"
+        android:padding="8dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/Gray"/>
+
     <Button
         android:id="@+id/approveBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Одобрить"
         android:backgroundTint="@color/blue"
-        android:textColor="@color/white" />
+        android:textColor="@color/white"
+        android:layout_marginTop="8dp" />
 
     <Button
         android:id="@+id/rejectBtn"
@@ -50,5 +70,7 @@
         android:layout_height="wrap_content"
         android:text="Отклонить"
         android:backgroundTint="@color/darkBlue"
-        android:textColor="@color/white" />
+        android:textColor="@color/white"
+        android:layout_marginTop="4dp" />
+
 </LinearLayout>

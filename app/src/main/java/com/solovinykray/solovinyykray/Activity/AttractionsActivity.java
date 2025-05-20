@@ -72,7 +72,7 @@ public class AttractionsActivity extends BaseActivity {
 
         CardView fabAdd = findViewById(R.id.fabAdd);
         fabAdd.setOnClickListener(view -> {
-            Intent intent = new Intent(getApplicationContext(), FormActivity.class);
+            Intent intent = new Intent(getApplicationContext(), RequestActivity.class);
             startActivity(intent);
         });
 
@@ -165,12 +165,17 @@ public class AttractionsActivity extends BaseActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
+                    int index = 0;
                     for (DataSnapshot issue : snapshot.getChildren()) {
                         ItemAttractions item = issue.getValue(ItemAttractions.class);
                         if (item != null) {
-                            list.add(item);
+                            if (index < 36 || "approved".equals(item.getStatus())) {
+                                list.add(item);
+                            }
+                            index++;
                         }
                     }
+
 
                     reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override

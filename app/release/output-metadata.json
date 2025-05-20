@@ -4,14 +4,14 @@
     "type": "APK",
     "kind": "Directory"
   },
-  "applicationId": "com.example.solovinyykray",
+  "applicationId": "com.solovinyykray.solovinyykray",
   "variantName": "release",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 2,
+      "versionCode": 9,
       "versionName": "1.0",
       "outputFile": "app-release.apk"
     }

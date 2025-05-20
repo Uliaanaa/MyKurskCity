@@ -26,7 +26,15 @@ public class ItemRoute implements Serializable {
     private String distance;
     private double score;
     private List<List<Double>> points;
+    private String audioToken;
 
+    public String getAudioToken() {
+        return audioToken;
+    }
+
+    public void setAudioToken(String audioToken) {
+        this.audioToken = audioToken;
+    }
     public ItemRoute() {
     }
 

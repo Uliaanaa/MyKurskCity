@@ -15,7 +15,7 @@
     </style>
 
     <style name="SpinnerDropdownItem">
-        <item name="android:textColor">@color/darkBlue</item> <!-- Темно-синий текст в выпадающем списке -->
+        <item name="android:textColor">@color/darkBlue</item>
         <item name="android:padding">8dp</item>
     </style>
 

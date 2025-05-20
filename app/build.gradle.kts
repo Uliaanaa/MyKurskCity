@@ -12,14 +12,14 @@ android {
         applicationId = "com.solovinyykray.solovinyykray"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
+        versionCode = 9
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("my-release-key.jks") // Замените на актуальный путь
+            storeFile = file("my-release-key.jks")
             storePassword = "Uu123456789"
             keyAlias = "Uu123456789"
             keyPassword = "Uu123456789"
@@ -77,6 +77,8 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
 
+    implementation ("com.github.jd-alexander:library:1.1.0")
+    implementation ("com.google.maps.android:android-maps-utils:2.3.0")
     implementation("com.google.android.material:material:1.9.0")
     implementation("com.github.ismaeldivita:chip-navigation-bar:1.4.0")
     implementation("androidx.viewpager2:viewpager2:1.0.0")

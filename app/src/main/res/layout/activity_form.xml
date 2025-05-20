@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:fillViewport="true"
     android:background="@color/white">
 
@@ -18,13 +19,17 @@
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/back" />
 
-        <ImageView
+        <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imageViewSelected"
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:layout_marginTop="16dp"
+            android:layout_margin="8dp"
+            android:layout_marginStart="4dp"
             android:scaleType="centerCrop"
-            android:visibility="gone" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.circleImageView"
+            tools:srcCompat="@tools:sample/backgrounds/scenic" />
 
         <Button
             android:id="@+id/buttonSelectImage"

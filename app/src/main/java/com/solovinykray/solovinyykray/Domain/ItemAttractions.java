@@ -18,6 +18,7 @@ public class ItemAttractions implements Serializable {
     private String bed;
     private double score;
     private boolean isSelected;
+    private String status;
     public ItemAttractions() {
     }
 
@@ -99,5 +100,13 @@ public class ItemAttractions implements Serializable {
 
     public void setSelected(boolean selected) {
         isSelected = selected;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

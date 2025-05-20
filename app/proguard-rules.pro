@@ -106,4 +106,3 @@
 -dontwarn org.gradle.api.tasks.InputFiles
 -dontwarn org.slf4j.Logger
 -dontwarn org.slf4j.LoggerFactory
-

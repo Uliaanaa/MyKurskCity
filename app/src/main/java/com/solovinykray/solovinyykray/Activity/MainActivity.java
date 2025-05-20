@@ -84,7 +84,7 @@ public class MainActivity extends BaseActivity {
         attractionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, AttractionsActivity.class);
+                Intent intent = new Intent(MainActivity.this, MarkerActivity.class);
                 startActivity(intent);
             }
         });

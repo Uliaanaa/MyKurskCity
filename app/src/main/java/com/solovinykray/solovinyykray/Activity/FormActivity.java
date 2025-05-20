@@ -37,6 +37,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
+
+
 /**
  * Активность для подачи заявки на добавление достопримечательности.
  * Позволяет пользователю заполнить форму с информацией о достопримечательности,
@@ -219,6 +221,9 @@ public class FormActivity extends AppCompatActivity {
 
 
     private void saveAttractionToDatabase(long key, String latitudeStr, String longitudeStr, String imageUrl) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String userId = currentUser != null ? currentUser.getUid() : "unknown";
+
         Attractions attraction = new Attractions(
                 editTextTitle.getText().toString().trim(),
                 editTextAddress.getText().toString().trim(),
@@ -228,7 +233,8 @@ public class FormActivity extends AppCompatActivity {
                 longitudeStr,
                 0,
                 imageUrl,
-                "pending"
+                "pending",
+                userId // 👈 добавили
         );
 
         DatabaseReference pendingRef = FirebaseDatabase.getInstance().getReference("PendingAttractions");
@@ -242,6 +248,7 @@ public class FormActivity extends AppCompatActivity {
                     }
                 });
     }
+
 
     /**
      * Получает географические координаты по адресу с помощью Google Maps Geocoding API.

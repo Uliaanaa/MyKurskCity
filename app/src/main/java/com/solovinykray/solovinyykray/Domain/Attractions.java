@@ -4,7 +4,6 @@ package com.solovinykray.solovinyykray.Domain;
  * Класс, представляющий достопримечательность.
  * Содержит информацию о местоположении, описании и статусе заявки.
  */
-
 public class Attractions {
     private String id;
     private String title;
@@ -16,6 +15,8 @@ public class Attractions {
     private int score;
     private String pic;
     private String status;
+    private String rejectComment;
+    private String author;
 
     public Attractions() {
     }
@@ -23,8 +24,7 @@ public class Attractions {
     /**
      * Конструктор для создания новой заявки на достопримечательность
      */
-
-    public Attractions(String title, String address, String description, String bed, String width, String longitude, int score, String pic, String status) {
+    public Attractions(String title, String address, String description, String bed, String width, String longitude, int score, String pic, String status, String author) {
         this.title = title;
         this.address = address;
         this.description = description;
@@ -34,13 +34,13 @@ public class Attractions {
         this.score = score;
         this.pic = pic;
         this.status = status;
+        this.author = author;
     }
+
 
     /**
      * Конструктор для одобренной достопримечательности
      */
-
-
     public Attractions(String id, String title, String address, String description, String bed, String width, String longitude, int score, String pic) {
         this.id = id;
         this.title = title;
@@ -54,6 +54,7 @@ public class Attractions {
         this.status = "approved";
     }
 
+    // === Геттеры и сеттеры ===
 
     public String getId() {
         return id;
@@ -134,4 +135,21 @@ public class Attractions {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public String getRejectComment() {
+        return rejectComment;
+    }
+
+    public void setRejectComment(String rejectComment) {
+        this.rejectComment = rejectComment;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
 }

@@ -17,8 +17,16 @@
         android:theme="@style/Theme.MyApplication"
         tools:targetApi="31">
         <activity
-            android:name="com.solovinykray.solovinyykray.Activity.RouteDetailActivity"
+            android:name="com.solovinykray.solovinyykray.Activity.MarkerActivity"
             android:exported="false" />
+        <activity
+            android:name="com.solovinykray.solovinyykray.Activity.RequestActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name="com.solovinykray.solovinyykray.Activity.RouteDetailActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name="com.solovinykray.solovinyykray.Activity.AdminActivity"
             android:exported="false"
