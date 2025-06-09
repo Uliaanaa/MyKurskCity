@@ -10,9 +10,9 @@
               <option name="connection">
                 <ConnectionSetting>
                   <option name="appId" value="com.solovinyykray.solovinyykray" />
-                  <option name="mobileSdkAppId" value="1:793557638775:android:a361c5e083f15da3bfb072" />
-                  <option name="projectId" value="myapp-productionn" />
-                  <option name="projectNumber" value="793557638775" />
+                  <option name="mobileSdkAppId" value="1:779508939115:android:36140e59e4c987bfd6f42e" />
+                  <option name="projectId" value="solovinyy-kray" />
+                  <option name="projectNumber" value="779508939115" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

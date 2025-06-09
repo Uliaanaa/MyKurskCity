@@ -60,12 +60,10 @@ public class RecomendedAdapter extends RecyclerView.Adapter<RecomendedAdapter.Vi
         holder.binding.adressTxt.setText(item.getAddress());
         holder.binding.scoreTxt.setText(String.valueOf(item.getScore()));
 
-        // Загрузка изображения с помощью Glide
         Glide.with(context)
                 .load(item.getPic())
                 .into(holder.binding.pic);
 
-        // Обработка нажатия на элемент
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, Detail_AttractionActivity.class);
             intent.putExtra("object", item);

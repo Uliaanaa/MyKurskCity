@@ -1,10 +1,15 @@
 package com.solovinykray.solovinyykray.Activity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -30,6 +35,7 @@ import com.ismaeldivita.chipnavigation.ChipNavigationBar;
 import com.solovinyykray.solovinyykray.R;
 import com.solovinyykray.solovinyykray.databinding.ActivityMainBinding;
 
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,18 +49,18 @@ import java.util.List;
  * - Ближайшие мероприятия
  * А также предоставляет навигацию по основным разделам приложения.
  */
-
 public class MainActivity extends BaseActivity {
     private ActivityMainBinding binding;
-    private EventAdapter eventAdapter;
+    private EventAdapter adapter;
     private List<KurskEventsParser.Event> allEventsList = new ArrayList<>();
+    private static final String PREFS_NAME = "TutorialPrefs";
+    private static final String KEY_TUTORIAL_SHOWN = "main_tutorial_shown";
 
     /**
-     * Инициализирует интерфейс,
-     * загружает данные и настраивает обработчики событий.
+     * Инициализирует интерфейс, загружает данные, настраивает обработчики событий
+     * и показывает обучающие подсказки при первом запуске.
      * @param savedInstanceState Сохраненное состояние активности, если оно существует
      */
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,70 +73,135 @@ public class MainActivity extends BaseActivity {
         initRecomended();
         initBanner();
         enableImmersiveMode();
+        showTutorialIfFirstLaunch();
 
         TextView routeButton = findViewById(R.id.route_btn);
         TextView attractionsButton = findViewById(R.id.attractions_btn);
         TextView eventButton = findViewById(R.id.event_btn);
 
-
         routeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ExplorerActivity.class);
-                startActivity(intent);
+                if (isNetworkAvailable()) {
+                    Intent intent = new Intent(MainActivity.this, ExplorerActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(MainActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         attractionsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, MarkerActivity.class);
-                startActivity(intent);
+                if (isNetworkAvailable()) {
+                    Intent intent = new Intent(MainActivity.this, MarkerActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(MainActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
         eventButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, EventActivity.class);
-                startActivity(intent);
+                if (isNetworkAvailable()) {
+                    Intent intent = new Intent(MainActivity.this, EventActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(MainActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                }
             }
         });
-
 
         ChipNavigationBar chipNavigationBar = findViewById(R.id.menu);
         chipNavigationBar.setOnItemSelectedListener(new ChipNavigationBar.OnItemSelectedListener() {
             @Override
             public void onItemSelected(int id) {
+                if (!isNetworkAvailable()) {
+                    Toast.makeText(MainActivity.this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 Intent intent;
                 if (id == R.id.explorer) {
                     intent = new Intent(MainActivity.this, ExplorerActivity.class);
                     startActivity(intent);
-
-                }
-                if (id == R.id.attractions) {
+                } else if (id == R.id.attractions) {
                     intent = new Intent(getApplicationContext(), AttractionsActivity.class);
                     startActivity(intent);
-
-                }
-                if (id == R.id.profile) {
+                } else if (id == R.id.profile) {
                     intent = new Intent(getApplicationContext(), ProfileActivity.class);
                     startActivity(intent);
-                }
-                if (id == R.id.cart) {
+                } else if (id == R.id.cart) {
                     intent = new Intent(getApplicationContext(), FavoritesActivity.class);
                     startActivity(intent);
-
                 }
             }
         });
+    }
 
+    /**
+     * Проверяет наличие подключения к интернету.
+     * @return true, если интернет доступен, false в противном случае.
+     */
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    /**
+     * Проверяет, был ли показан туториал, и отображает подсказки последовательно при первом запуске.
+     * Завершает туториал при прокрутке ScrollView.
+     */
+    private void showTutorialIfFirstLaunch() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean tutorialShown = prefs.getBoolean(KEY_TUTORIAL_SHOWN, false);
+
+        if (!tutorialShown) {
+            // Показываем первую подсказку
+            binding.tutorialOverlayTop.setVisibility(View.VISIBLE);
+            binding.tutorialOverlayBottom.setVisibility(View.GONE);
+
+            // При клике на первую подсказку показываем вторую (возле меню)
+            binding.tutorialOverlayTop.setOnClickListener(v -> {
+                binding.tutorialOverlayTop.setVisibility(View.GONE);
+                binding.tutorialOverlayBottom.setVisibility(View.VISIBLE);
+            });
+
+            // При клике на вторую подсказку завершаем туториал
+            binding.tutorialOverlayBottom.setOnClickListener(v -> {
+                completeTutorial(prefs);
+            });
+
+            // Завершаем туториал при прокрутке ScrollView
+            binding.scrollView2.setOnScrollChangeListener((View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
+                if (scrollY != oldScrollY) {
+                    completeTutorial(prefs);
+                }
+            });
+        } else {
+            // Если туториал уже показан, скрываем оба оверлея
+            binding.tutorialOverlayTop.setVisibility(View.GONE);
+            binding.tutorialOverlayBottom.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Завершает туториал, скрывая оверлеи и сохраняя состояние в SharedPreferences.
+     */
+    private void completeTutorial(SharedPreferences prefs) {
+        binding.tutorialOverlayTop.setVisibility(View.GONE);
+        binding.tutorialOverlayBottom.setVisibility(View.GONE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(KEY_TUTORIAL_SHOWN, true);
+        editor.apply();
     }
 
     /**
      * Скрывает системную навигацию (включает иммерсивный режим).
      */
-
     private void enableImmersiveMode() {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -141,8 +212,13 @@ public class MainActivity extends BaseActivity {
     /**
      * Загружает и отображает популярные маршруты (топ-5 по рейтингу).
      */
-
     private void initPopular() {
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+            binding.progressBarPopular.setVisibility(View.GONE);
+            return;
+        }
+
         DatabaseReference routesRef = database.getReference("Route");
         DatabaseReference reviewsRef = database.getReference("reviews");
         binding.progressBarPopular.setVisibility(View.VISIBLE);
@@ -216,8 +292,6 @@ public class MainActivity extends BaseActivity {
      * Настраивает слайдер баннеров.
      * @param items Список элементов для слайдера
      */
-
-
     private void banners(ArrayList<SliderItems> items) {
         binding.viewPagerSlider.setAdapter(new SliderAdapter(items, binding.viewPagerSlider));
         binding.viewPagerSlider.setClipToPadding(false);
@@ -233,8 +307,13 @@ public class MainActivity extends BaseActivity {
     /**
      * Загружает баннеры из Firebase Database.
      */
-
     private void initBanner() {
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+            binding.progressBarBanner.setVisibility(View.GONE);
+            return;
+        }
+
         DatabaseReference myRef = database.getReference("Banner");
         binding.progressBarBanner.setVisibility(RecyclerView.VISIBLE);
         ArrayList<SliderItems> items = new ArrayList<>();
@@ -252,6 +331,8 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Ошибка загрузки баннеров: " + error.getMessage());
+                binding.progressBarBanner.setVisibility(View.GONE);
             }
         });
     }
@@ -259,8 +340,13 @@ public class MainActivity extends BaseActivity {
     /**
      * Загружает и отображает популярные достопримечательности (топ-5 по рейтингу).
      */
-
     private void initRecomended() {
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+            binding.progressBarRecomended.setVisibility(View.GONE);
+            return;
+        }
+
         DatabaseReference attractionsRef = database.getReference("Attractions");
         DatabaseReference reviewsRef = database.getReference("reviews");
         binding.progressBarRecomended.setVisibility(View.VISIBLE);
@@ -334,8 +420,13 @@ public class MainActivity extends BaseActivity {
     /**
      * Загружает категории мероприятий из Firebase Database.
      */
-
     private void initCategory() {
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+            binding.progressBarCategory.setVisibility(View.GONE);
+            return;
+        }
+
         DatabaseReference myRef = database.getReference("Category");
         binding.progressBarCategory.setVisibility(View.VISIBLE);
         ArrayList<Category> categoryList = new ArrayList<>();
@@ -363,6 +454,8 @@ public class MainActivity extends BaseActivity {
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Ошибка загрузки категорий: " + error.getMessage());
+                binding.progressBarCategory.setVisibility(View.GONE);
             }
         });
     }
@@ -370,8 +463,13 @@ public class MainActivity extends BaseActivity {
     /**
      * Загружает список мероприятий с сайта.
      */
-
     private void initEvents() {
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Нет подключения к интернету", Toast.LENGTH_SHORT).show();
+            binding.progressBarEvent.setVisibility(View.GONE);
+            return;
+        }
+
         binding.progressBarEvent.setVisibility(View.VISIBLE);
 
         new Thread(() -> {
@@ -380,8 +478,8 @@ public class MainActivity extends BaseActivity {
             runOnUiThread(() -> {
                 if (!allEventsList.isEmpty()) {
                     binding.recyclerViewEvent.setLayoutManager(new LinearLayoutManager(MainActivity.this, LinearLayoutManager.HORIZONTAL, false));
-                    eventAdapter = new EventAdapter(allEventsList);
-                    binding.recyclerViewEvent.setAdapter(eventAdapter);
+                    adapter = new EventAdapter(allEventsList);
+                    binding.recyclerViewEvent.setAdapter(adapter);
                 }
                 binding.progressBarEvent.setVisibility(View.GONE);
             });
@@ -392,7 +490,6 @@ public class MainActivity extends BaseActivity {
      * Фильтрует мероприятия по выбранной категории.
      * @param category категория выбранная пользователем.
      */
-
     private void filterEventsByCategory(String category) {
         List<KurskEventsParser.Event> filteredList = new ArrayList<>();
 
@@ -402,7 +499,7 @@ public class MainActivity extends BaseActivity {
             }
         }
 
-        eventAdapter.updateList(filteredList);
+        adapter.updateList(filteredList);
 
         if (filteredList.isEmpty()) {
             binding.tvNoEventsFound.setVisibility(View.VISIBLE);
@@ -410,6 +507,4 @@ public class MainActivity extends BaseActivity {
             binding.tvNoEventsFound.setVisibility(View.GONE);
         }
     }
-
-
 }

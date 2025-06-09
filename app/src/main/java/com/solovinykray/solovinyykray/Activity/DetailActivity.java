@@ -3,6 +3,7 @@ package com.solovinykray.solovinyykray.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 
@@ -66,7 +67,7 @@ public class DetailActivity extends BaseActivity {
     private void setVariable() {
         binding.titleTxt.setText(object.getTitle());
         binding.adressTxt.setText(object.getAddress());
-        binding.descriptionTxt.setText(object.getDescription());
+        binding.descriptionTxt.setText(Html.fromHtml(object.getDescription(), Html.FROM_HTML_MODE_LEGACY));
         binding.bedTxt.setText(String.valueOf(object.getBed()));
         binding.distanceTxt.setText(object.getDistance());
         binding.durationTxt.setText(object.getDuration());
@@ -137,7 +138,7 @@ public class DetailActivity extends BaseActivity {
 
     private void getIntentExtra() {
         object = (ItemRoute) getIntent().getSerializableExtra("object");
-        loadFavoriteStatus(); // Загрузка статуса избранного
+        loadFavoriteStatus();
     }
 
     /**

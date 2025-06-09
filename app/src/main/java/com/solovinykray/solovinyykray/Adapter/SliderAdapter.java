@@ -60,7 +60,6 @@ public class SliderAdapter extends RecyclerView.Adapter<SliderAdapter.SliderView
     public void onBindViewHolder(@NonNull SliderViewHolder holder, int position) {
         holder.setImage(sliderItems.get(position));
 
-        // Активируем бесконечную прокрутку при достижении предпоследнего элемента
         if (position == sliderItems.size() - 2) {
             viewPager2.post(this::updateSliderForInfiniteScroll);
         }

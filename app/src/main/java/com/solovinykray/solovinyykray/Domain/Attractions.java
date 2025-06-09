@@ -54,7 +54,7 @@ public class Attractions {
         this.status = "approved";
     }
 
-    // === Геттеры и сеттеры ===
+
 
     public String getId() {
         return id;

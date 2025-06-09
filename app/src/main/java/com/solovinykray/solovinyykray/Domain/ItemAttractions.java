@@ -19,6 +19,16 @@ public class ItemAttractions implements Serializable {
     private double score;
     private boolean isSelected;
     private String status;
+    private String videoUrl;
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
+    }
+
     public ItemAttractions() {
     }
 

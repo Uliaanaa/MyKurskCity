@@ -110,6 +110,7 @@ public class RequestActivity extends BaseActivity {
      */
     private void setupSpinner() {
         Spinner requestSpinner = findViewById(R.id.request_spinner);
+        requestSpinner.setBackgroundResource(R.drawable.spinner_background);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this,
                 R.array.request_items, android.R.layout.simple_spinner_item);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -118,6 +119,7 @@ public class RequestActivity extends BaseActivity {
         requestSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ((TextView) parent.getChildAt(0)).setTextColor(getResources().getColor(R.color.darkBlue));
                 String selectedStatus = parent.getItemAtPosition(position).toString();
                 if (selectedStatus.equals("Одобренные")) {
                     loadUserRequests("approved");

@@ -1,6 +1,7 @@
 package com.solovinykray.solovinyykray.Activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -23,27 +24,28 @@ import com.ismaeldivita.chipnavigation.ChipNavigationBar;
 import com.solovinyykray.solovinyykray.R;
 import com.solovinyykray.solovinyykray.databinding.ActivityAttractionsBinding;
 
+
 import java.util.ArrayList;
 
 /**
  * Активность для отображения и управления достопримечательностями.
  * Класс отвечает за отображение списка достопримечательностей, реализацию поиска
  * и навигацию между экранами через нижнее меню.
- * Также она позволяет выбирать конкретные достопримечательности для составление маршрута из них
+ * Также она позволяет выбирать конкретные достопримечательности для составления маршрута из них
  * и реализовывает возможность добавления достопримечательности
  */
-
 public class AttractionsActivity extends BaseActivity {
     ActivityAttractionsBinding binding;
     AttractionsAdapter adapter;
     private DatabaseReference database;
+    private static final String PREFS_NAME = "TutorialPrefs";
+    private static final String KEY_TUTORIAL_SHOWN = "attractions_tutorial_shown";
 
     /**
-     * Инициализирует активность, настраивает UI компоненты и загружает данные о достопримечательностях.
+     * Инициализирует активность, настраивает UI компоненты, загружает данные о достопримечательностях
+     * и показывает обучающие подсказки при первом запуске.
      * @param savedInstanceState Сохраненное состояние активности (может быть null)
      */
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,6 +55,7 @@ public class AttractionsActivity extends BaseActivity {
         database = FirebaseDatabase.getInstance().getReference();
         initRoute();
         enableImmersiveMode();
+        showTutorialIfFirstLaunch();
 
         binding.editTextText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -81,7 +84,7 @@ public class AttractionsActivity extends BaseActivity {
                 Toast.makeText(this, "Выберите хотя бы одну достопримечательность", Toast.LENGTH_SHORT).show();
             } else {
                 Intent intent = new Intent(this, RouteDetailActivity.class);
-                intent.putExtra("selectedItems", new ArrayList<>(adapter.getSelectedAttractions())); // Используем putExtra
+                intent.putExtra("selectedItems", new ArrayList<>(adapter.getSelectedAttractions()));
                 startActivity(intent);
             }
         });
@@ -109,9 +112,38 @@ public class AttractionsActivity extends BaseActivity {
     }
 
     /**
-     * показывает кнопку построения маршрута.
+     * Проверяет, был ли показан туториал, и показывает подсказки последовательно при первом запуске.
      */
+    private void showTutorialIfFirstLaunch() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean tutorialShown = prefs.getBoolean(KEY_TUTORIAL_SHOWN, false);
 
+        if (!tutorialShown) {
+            // Показываем только верхнюю подсказку сначала
+            binding.tutorialOverlayTop.setVisibility(View.VISIBLE);
+            binding.tutorialOverlayBottom.setVisibility(View.GONE);
+            // При клике на верхнюю подсказку показываем нижнюю
+            binding.tutorialOverlayTop.setOnClickListener(v -> {
+                binding.tutorialOverlayTop.setVisibility(View.GONE);
+                binding.tutorialOverlayBottom.setVisibility(View.VISIBLE);
+            });
+            // При клике на нижнюю подсказку завершаем туториал
+            binding.tutorialOverlayBottom.setOnClickListener(v -> {
+                binding.tutorialOverlayBottom.setVisibility(View.GONE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(KEY_TUTORIAL_SHOWN, true);
+                editor.apply();
+            });
+        } else {
+            // Если туториал уже показан, скрываем оба оверлея
+            binding.tutorialOverlayTop.setVisibility(View.GONE);
+            binding.tutorialOverlayBottom.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Показывает кнопку построения маршрута.
+     */
     public void showRouteButton() {
         binding.fabRoute.setVisibility(View.VISIBLE);
     }
@@ -119,23 +151,20 @@ public class AttractionsActivity extends BaseActivity {
     /**
      * Скрывает кнопку построения маршрута.
      */
-
     public void hideRouteButton() {
         binding.fabRoute.setVisibility(View.GONE);
     }
 
     /**
-     * показывает кнопку для отправки формы.
+     * Показывает кнопку для отправки формы.
      */
-
     public void showFormButton() {
         binding.fabAdd.setVisibility(View.VISIBLE);
     }
 
     /**
-     * Скрывает кнопку для отправки фомы.
+     * Скрывает кнопку для отправки формы.
      */
-
     public void hideFormButton() {
         binding.fabAdd.setVisibility(View.GONE);
     }
@@ -143,7 +172,6 @@ public class AttractionsActivity extends BaseActivity {
     /**
      * Скрывает системную навигацию (включает иммерсивный режим).
      */
-
     private void enableImmersiveMode() {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
@@ -154,7 +182,6 @@ public class AttractionsActivity extends BaseActivity {
      * Инициализирует загрузку данных о достопримечательностях и
      * высчитывает рейтинг на основе отзывов пользователей.
      */
-
     private void initRoute() {
         DatabaseReference attractionsRef = database.child("Attractions");
         DatabaseReference reviewsRef = database.child("reviews");
@@ -169,13 +196,12 @@ public class AttractionsActivity extends BaseActivity {
                     for (DataSnapshot issue : snapshot.getChildren()) {
                         ItemAttractions item = issue.getValue(ItemAttractions.class);
                         if (item != null) {
-                            if (index < 36 || "approved".equals(item.getStatus())) {
+                            if (index < 38 || "approved".equals(item.getStatus())) {
                                 list.add(item);
                             }
                             index++;
                         }
                     }
-
 
                     reviewsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override

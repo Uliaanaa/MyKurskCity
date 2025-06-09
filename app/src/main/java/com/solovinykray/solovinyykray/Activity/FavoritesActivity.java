@@ -26,25 +26,27 @@ import com.ismaeldivita.chipnavigation.ChipNavigationBar;
 import com.solovinyykray.solovinyykray.R;
 import com.solovinyykray.solovinyykray.databinding.ActivityFavoritesBinding;
 
+
 import java.util.ArrayList;
 
 /**
  * Активность для отображения избранных маршрутов и достопримечательностей,
  * позволяет переключаться на нужный раздел.
- * Загружает соответсвующие данные из Firebase и отображает их в списке.
+ * Загружает соответствующие данные из Firebase и отображает их в списке.
  * Для каждого элемента высчитывает рейтинг.
  */
 public class FavoritesActivity extends BaseActivity {
     ActivityFavoritesBinding binding;
     AttractionsAdapter adapter;
     ExplorerAdapter explorerAdapter;
+    private static final String PREFS_NAME = "TutorialPrefs";
+    private static final String KEY_TUTORIAL_SHOWN = "tutorial_shown";
 
     /**
      * Инициализирует активность, интерфейс, настраивает спиннер категорий, загружает
-     * избранные элементы и настраивает нижнее меню.
+     * избранные элементы, настраивает нижнее меню и показывает обучающее сообщение при первом запуске.
      * @param savedInstanceState Сохраненное состояние активности (может быть null)
      */
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,6 +56,7 @@ public class FavoritesActivity extends BaseActivity {
         setupCategorySpinner();
         loadAttractions();
         enableImmersiveMode();
+        showTutorialIfFirstLaunch();
 
         ChipNavigationBar chipNavigationBar = findViewById(R.id.menu);
         if (chipNavigationBar != null) {
@@ -77,9 +80,28 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     /**
+     * Проверяет, был ли показан туториал, и отображает его при первом запуске.
+     */
+    private void showTutorialIfFirstLaunch() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean tutorialShown = prefs.getBoolean(KEY_TUTORIAL_SHOWN, false);
+
+        if (!tutorialShown) {
+            binding.tutorialOverlay.setVisibility(View.VISIBLE);
+            binding.tutorialOverlay.setOnClickListener(v -> {
+                binding.tutorialOverlay.setVisibility(View.GONE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(KEY_TUTORIAL_SHOWN, true);
+                editor.apply();
+            });
+        } else {
+            binding.tutorialOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    /**
      * Скрывает системную навигацию (включает иммерсивный режим).
      */
-
     private void enableImmersiveMode() {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -91,7 +113,6 @@ public class FavoritesActivity extends BaseActivity {
      * Настраивает спиннер для выбора категории.
      * При выборе пользователем загружает соответствующий список элементов.
      */
-
     private void setupCategorySpinner() {
         Spinner categorySpinner = findViewById(R.id.category_spinner);
         categorySpinner.setBackgroundResource(R.drawable.spinner_background);
@@ -120,10 +141,9 @@ public class FavoritesActivity extends BaseActivity {
 
     /**
      * Загружает список избранных достопримечательностей из Firebase,
-     * для каждой достопримечательности расчитывает рейтинг, обновляет
+     * для каждой достопримечательности рассчитывает рейтинг, обновляет
      * RecyclerView с загруженными данными.
      */
-
     private void loadAttractions() {
         binding.progressBarAttractions.setVisibility(View.VISIBLE);
         ArrayList<ItemAttractions> favoriteList = new ArrayList<>();
@@ -192,10 +212,9 @@ public class FavoritesActivity extends BaseActivity {
 
     /**
      * Загружает список избранных маршрутов из Firebase,
-     * для каждого маршрута расчитывает рейтинг, обновляет
+     * для каждого маршрута рассчитывает рейтинг, обновляет
      * RecyclerView с загруженными данными.
      */
-
     private void loadRoutes() {
         binding.progressBarAttractions.setVisibility(View.VISIBLE);
         ArrayList<ItemRoute> favoriteList = new ArrayList<>();
@@ -262,11 +281,10 @@ public class FavoritesActivity extends BaseActivity {
     }
 
     /**
-     * Проверяе, добавлен ли элемент в избранное
+     * Проверяет, добавлен ли элемент в избранное
      * @param title название достопримечательности/маршрута.
      * @return true если элемент добавлен в избранное, false в противном случае.
      */
-
     private boolean isFavorite(String title) {
         SharedPreferences prefs = getSharedPreferences("Favorites", MODE_PRIVATE);
         return prefs.getBoolean("favorite_" + title, false);

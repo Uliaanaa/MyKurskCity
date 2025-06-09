@@ -18,7 +18,6 @@ import com.solovinykray.solovinyykray.Domain.Attractions;
 import com.github.dhaval2404.imagepicker.ImagePicker;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
@@ -32,12 +31,12 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
-
-
+import java.util.UUID;
 
 /**
  * Активность для подачи заявки на добавление достопримечательности.
@@ -45,7 +44,6 @@ import java.util.Locale;
  * загрузить изображение и отправить заявку на модерацию.
  * Автоматически определяет координаты по указанному адресу с помощью Google Maps API.
  */
-
 public class FormActivity extends AppCompatActivity {
 
     private EditText editTextTitle, editTextAddress, editTextDescription, editTextType;
@@ -54,7 +52,7 @@ public class FormActivity extends AppCompatActivity {
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
     private Uri imageUri;
-    private final String defaultImageUrl = "https://firebasestorage.googleapis.com/v0/b/myapp-productionn.firebasestorage.app/o/%D0%9F%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA%D0%B8.jpg?alt=media&token=8b12aa7a-a407-43e4-a80a-9b54ea103c00";
+    private final String defaultImageUrl = "https://firebasestorage.googleapis.com/v0/b/solovinyy-kray.firebasestorage.app/o/%D0%9F%D0%B0%D0%BC%D1%8F%D1%82%D0%BD%D0%B8%D0%BA%D0%B8.jpg?alt=media&token=e78f8904-f935-43f6-b53d-fc1ca90ee1c6";
 
     /**
      * Инициализирует UI элементы,
@@ -62,8 +60,6 @@ public class FormActivity extends AppCompatActivity {
      *
      * @param savedInstanceState Сохраненное состояние активности
      */
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,10 +86,9 @@ public class FormActivity extends AppCompatActivity {
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            // Пользователь не авторизован
             Toast.makeText(this, "Чтобы отправить форму, войдите в систему", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(FormActivity.this, LoginActivity.class));
-            finish(); // Закрываем FormActivity
+            finish();
         }
 
         buttonSelectImage.setOnClickListener(v -> ImagePicker.with(this)
@@ -123,7 +118,6 @@ public class FormActivity extends AppCompatActivity {
      * @param resultCode Код результата
      * @param data Данные с выбранным изображением
      */
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -141,7 +135,6 @@ public class FormActivity extends AppCompatActivity {
     /**
      * Скрывает системную навигацию (включает иммерсивный режим).
      */
-
     private void enableImmersiveMode() {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -152,7 +145,6 @@ public class FormActivity extends AppCompatActivity {
     /**
      * Проверяет заполнение полей формы и инициирует процесс сохранения.
      */
-
     private void saveAttraction() {
         String title = editTextTitle.getText().toString().trim();
         String address = editTextAddress.getText().toString().trim();
@@ -164,44 +156,28 @@ public class FormActivity extends AppCompatActivity {
             return;
         }
 
-        databaseReference.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult().exists()) {
-                long maxKey = 37;
-                for (DataSnapshot snapshot : task.getResult().getChildren()) {
-                    try {
-                        long key = Long.parseLong(snapshot.getKey());
-                        if (key > maxKey) {
-                            maxKey = key;
-                        }
-                    } catch (NumberFormatException ignored) {}
-                }
-                long newKey = maxKey + 1;
-                saveAttractionWithKey(newKey);
-            } else {
-                saveAttractionWithKey(38);
-            }
-        });
+        String attractionId = UUID.randomUUID().toString();
+        saveAttractionWithKey(attractionId);
     }
 
     /**
      * Сохраняет достопримечательность с указанным ключом, предварительно получив координаты.
      *
-     * @param key Уникальный ключ для новой записи
+     * @param attractionId Уникальный строковый идентификатор для новой записи
      */
-
-    private void saveAttractionWithKey(long key) {
+    private void saveAttractionWithKey(String attractionId) {
         getCoordinates(editTextAddress.getText().toString().trim(), (latitude, longitude) -> {
             String latitudeStr = String.format(Locale.US, "%.6f", latitude);
             String longitudeStr = String.format(Locale.US, "%.6f", longitude);
 
             if (imageUri == null) {
-                saveAttractionToDatabase(key, latitudeStr, longitudeStr, defaultImageUrl);
+                saveAttractionToDatabase(attractionId, latitudeStr, longitudeStr, defaultImageUrl);
             } else {
-                StorageReference fileReference = storageReference.child(key + ".jpg");
+                StorageReference fileReference = storageReference.child(attractionId + ".jpg");
                 fileReference.putFile(imageUri).addOnSuccessListener(taskSnapshot -> {
                     fileReference.getDownloadUrl().addOnSuccessListener(uri -> {
                         String imageUrl = uri.toString();
-                        saveAttractionToDatabase(key, latitudeStr, longitudeStr, imageUrl);
+                        saveAttractionToDatabase(attractionId, latitudeStr, longitudeStr, imageUrl);
                     });
                 }).addOnFailureListener(e -> {
                     Toast.makeText(this, "Ошибка при загрузке изображения", Toast.LENGTH_SHORT).show();
@@ -213,14 +189,12 @@ public class FormActivity extends AppCompatActivity {
     /**
      * Сохраняет данные достопримечательности в Firebase Database.
      *
-     * @param key Уникальный ключ записи
+     * @param attractionId Уникальный строковый идентификатор записи
      * @param latitudeStr Широта в строковом формате
      * @param longitudeStr Долгота в строковом формате
      * @param imageUrl URL изображения
      */
-
-
-    private void saveAttractionToDatabase(long key, String latitudeStr, String longitudeStr, String imageUrl) {
+    private void saveAttractionToDatabase(String attractionId, String latitudeStr, String longitudeStr, String imageUrl) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String userId = currentUser != null ? currentUser.getUid() : "unknown";
 
@@ -234,11 +208,11 @@ public class FormActivity extends AppCompatActivity {
                 0,
                 imageUrl,
                 "pending",
-                userId // 👈 добавили
+                userId
         );
 
         DatabaseReference pendingRef = FirebaseDatabase.getInstance().getReference("PendingAttractions");
-        pendingRef.child(String.valueOf(key)).setValue(attraction)
+        pendingRef.child(attractionId).setValue(attraction)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Toast.makeText(this, "Заявка отправлена на модерацию", Toast.LENGTH_SHORT).show();
@@ -249,16 +223,14 @@ public class FormActivity extends AppCompatActivity {
                 });
     }
 
-
     /**
      * Получает географические координаты по адресу с помощью Google Maps Geocoding API.
      *
      * @param address Адрес для геокодирования
      * @param callback Callback для обработки результата
      */
-
     private void getCoordinates(String address, GeocodingCallback callback) {
-        String apiKey = "AIzaSyCitUigFLPYSHGYBb_Y7t_dWEzjPlt6wQk";
+        String apiKey = "AIzaSyCli7GThQM59jg-MG0TenJcB6bvBomrIcQ";
         String url = "https://maps.googleapis.com/maps/api/geocode/json?address="
                 + URLEncoder.encode(address, StandardCharsets.UTF_8)
                 + "&key=" + apiKey;
@@ -294,10 +266,10 @@ public class FormActivity extends AppCompatActivity {
                                 .getJSONObject("geometry")
                                 .getJSONObject("location");
 
-                        double width = location.getDouble("lat");
+                        double latitude = location.getDouble("lat");
                         double longitude = location.getDouble("lng");
 
-                        runOnUiThread(() -> callback.onCoordinatesReceived(width, longitude));
+                        runOnUiThread(() -> callback.onCoordinatesReceived(latitude, longitude));
                     } else {
                         runOnUiThread(() ->
                                 Toast.makeText(FormActivity.this, "Адрес не найден", Toast.LENGTH_SHORT).show()
@@ -316,7 +288,6 @@ public class FormActivity extends AppCompatActivity {
     /**
      * Интерфейс callback для получения координат из Geocoding API.
      */
-
     interface GeocodingCallback {
         /**
          * Вызывается при успешном получении координат.

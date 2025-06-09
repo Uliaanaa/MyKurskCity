@@ -114,7 +114,7 @@ public class AdminActivity extends AppCompatActivity implements AdminAdapter.OnA
                 for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
                     Attractions attraction = dataSnapshot.getValue(Attractions.class);
                     if (attraction != null) {
-                        attraction.setId(dataSnapshot.getKey()); // Сохраняем ID заявки
+                        attraction.setId(dataSnapshot.getKey());
                         pendingAttractions.add(attraction);
                     }
                 }

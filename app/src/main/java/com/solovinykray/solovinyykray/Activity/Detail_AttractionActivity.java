@@ -3,9 +3,15 @@ package com.solovinykray.solovinyykray.Activity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.solovinykray.solovinyykray.Domain.ItemAttractions;
@@ -29,6 +35,7 @@ public class Detail_AttractionActivity extends BaseActivity {
     private ItemAttractions object;
     private boolean isFavorite = false;
     String l="",w="";
+    private TextView videoTitle;
 
     /**
      * Инициализирует активность, привязку данных, получает переданные данные,
@@ -47,10 +54,109 @@ public class Detail_AttractionActivity extends BaseActivity {
         setVariable();
         loadAndCalculateRating();
         enableImmersiveMode();
+        setupVkVideoPlayer();
+    }
+
+
+
+    /**
+     * Настраивает WebView для воспроизведения видео с VK Video.
+     */
+    private void setupVkVideoPlayer() {
+        String videoUrl = object.getVideoUrl();
+
+        if (videoUrl == null || videoUrl.isEmpty()) {
+            Log.d("VkVideoDebug", "Ссылка на видео отсутствует");
+            binding.vkWebView.setVisibility(View.GONE);
+            binding.videoTitle.setVisibility(View.GONE);
+            return;
+        }
+
+        String embedUrl = extractVkVideoEmbedUrl(videoUrl);
+        Log.d("VkVideoDebug", "Embed URL: " + embedUrl);
+
+        if (embedUrl == null || embedUrl.isEmpty()) {
+            Log.e("VkVideoError", "Неверный формат VK Video ссылки: " + videoUrl);
+            binding.vkWebView.setVisibility(View.GONE);
+            binding.videoTitle.setVisibility(View.GONE);
+            return;
+        }
+
+        binding.videoTitle.setVisibility(View.VISIBLE);
+        binding.vkWebView.setVisibility(View.VISIBLE);
+
+        binding.vkWebView.getSettings().setJavaScriptEnabled(true);
+        binding.vkWebView.getSettings().setDomStorageEnabled(true);
+        binding.vkWebView.getSettings().setLoadWithOverviewMode(true);
+        binding.vkWebView.getSettings().setUseWideViewPort(true);
+
+        binding.vkWebView.setWebChromeClient(new WebChromeClient());
+
+        binding.vkWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                Log.d("VkVideoDebug", "Страница загружена: " + url);
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e("VkVideoError", "Ошибка загрузки WebView: " + description);
+                binding.vkWebView.setVisibility(View.GONE);
+                binding.videoTitle.setVisibility(View.GONE);
+            }
+        });
+
+        Log.d("VkVideoDebug", "Загружаем embed URL: " + embedUrl);
+        binding.vkWebView.loadUrl(embedUrl);
+
 
     }
 
     /**
+     * Извлекает embed-URL для VK Video из предоставленной ссылки.
+     * Поддерживает форматы:
+     * - https://vkvideo.ru/video-21665793_456242598
+     * - https://vk.com/video-21665793_456242598
+     * - https://vk.com/video_ext.php?oid=-21665793&id=456242598&hd=2&autoplay=1
+     * @param url Ссылка на видео VK
+     * @return Embed-URL для WebView или null, если ссылка неверная
+     */
+    private String extractVkVideoEmbedUrl(String url) {
+        try {
+            Uri uri = Uri.parse(url);
+            String host = uri.getHost();
+            String path = uri.getPath();
+
+            if (host.contains("vk.com") && path.startsWith("/video_ext.php")) {
+                String oid = uri.getQueryParameter("oid");
+                String id = uri.getQueryParameter("id");
+                if (oid != null && id != null) {
+                    // Формируем чистый embed-URL с автозапуском
+                    return "https://vk.com/video_ext.php?oid=" + oid + "&id=" + id + "&hd=2&autoplay=1";
+                }
+            }
+            else if (host.contains("vk.com") || host.contains("vkvideo.ru")) {
+                if (path.startsWith("/video")) {
+                    String videoId = path.replace("/video", "");
+                    if (videoId.contains("?")) {
+                        videoId = videoId.substring(0, videoId.indexOf("?"));
+                    }
+                    if (videoId.contains("_")) {
+                        return "https://vk.com/video_ext.php?oid=" + videoId + "&hd=2&autoplay=1";
+                    }
+                }
+            }
+            Log.e("VkVideoParseError", "Неверный формат URL: " + url);
+            return null;
+        } catch (Exception e) {
+            Log.e("VkVideoParseError", "Ошибка парсинга: " + url, e);
+            return null;
+        }
+    }
+
+     /**
      * Скрывает системную навигацию (включает иммерсивный режим).
      */
 
@@ -69,7 +175,7 @@ public class Detail_AttractionActivity extends BaseActivity {
     private void setVariable() {
         binding.titleTxt.setText(object.getTitle());
         binding.adressTxt.setText(object.getAddress());
-        binding.descriptionTxt.setText(object.getDescription());
+        binding.descriptionTxt.setText(Html.fromHtml(object.getDescription(), Html.FROM_HTML_MODE_LEGACY));
         binding.bedTxt.setText(object.getBed());
         binding.ratingBar.setRating((float) object.getScore());
         l=object.getLongitude();

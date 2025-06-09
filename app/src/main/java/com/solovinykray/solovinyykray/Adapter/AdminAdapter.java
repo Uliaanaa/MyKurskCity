@@ -178,7 +178,7 @@ public class AdminAdapter extends RecyclerView.Adapter<AdminAdapter.ViewHolder> 
         data.put("description", attraction.getDescription());
         data.put("pic", attraction.getPic());
         data.put("author", author);
-        data.put("status", "rejected"); // Используем ключ "rejected" для фильтрации
+        data.put("status", "rejected");
         data.put("rejectComment", comment);
 
         rejectedRef.child(attraction.getId()).setValue(data)

@@ -87,7 +87,6 @@ import java.io.IOException;
         binding.adminPanelBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Переход на экран с необработанными заявками
                 Intent intent = new Intent(ProfileActivity.this, AdminActivity.class);
                 startActivity(intent);
             }

@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "779508939115",
+    "firebase_url": "https://solovinyy-kray-default-rtdb.firebaseio.com",
+    "project_id": "solovinyy-kray",
+    "storage_bucket": "solovinyy-kray.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:779508939115:android:9f449b4f8bc15326d6f42e",
+        "android_client_info": {
+          "package_name": "com.solovinykray.solovinyykray"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtGMyHKllX71wBYU40imYg731oY9mOJMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:779508939115:android:36140e59e4c987bfd6f42e",
+        "android_client_info": {
+          "package_name": "com.solovinyykray.solovinyykray"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtGMyHKllX71wBYU40imYg731oY9mOJMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

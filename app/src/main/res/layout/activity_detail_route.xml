@@ -190,6 +190,25 @@
                         </LinearLayout>
 
                         <TextView
+                            android:id="@+id/videoTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="24dp"
+                            android:text="Видеоэкскурсия"
+                            android:textColor="@color/darkBlue"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"/>
+
+                        <WebView
+                            android:id="@+id/vkWebView"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp"
+                            android:layout_margin="16dp"
+                            android:visibility="gone"/>
+
+
+                        <TextView
                             android:id="@+id/textView16"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"

@@ -1,22 +1,22 @@
 {
   "project_info": {
-    "project_number": "793557638775",
-    "firebase_url": "https://myapp-productionn-default-rtdb.firebaseio.com",
-    "project_id": "myapp-productionn",
-    "storage_bucket": "myapp-productionn.firebasestorage.app"
+    "project_number": "779508939115",
+    "firebase_url": "https://solovinyy-kray-default-rtdb.firebaseio.com",
+    "project_id": "solovinyy-kray",
+    "storage_bucket": "solovinyy-kray.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:793557638775:android:e1bc32ff800df3babfb072",
+        "mobilesdk_app_id": "1:779508939115:android:9f449b4f8bc15326d6f42e",
         "android_client_info": {
-          "package_name": "com.example.myapplication"
+          "package_name": "com.solovinykray.solovinyykray"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCws_uycDxNl22HplxQbu5gycdCgQT9MKE"
+          "current_key": "AIzaSyBtGMyHKllX71wBYU40imYg731oY9mOJMw"
         }
       ],
       "services": {
@@ -27,7 +27,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:793557638775:android:a361c5e083f15da3bfb072",
+        "mobilesdk_app_id": "1:779508939115:android:36140e59e4c987bfd6f42e",
         "android_client_info": {
           "package_name": "com.solovinyykray.solovinyykray"
         }
@@ -35,7 +35,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCws_uycDxNl22HplxQbu5gycdCgQT9MKE"
+          "current_key": "AIzaSyBtGMyHKllX71wBYU40imYg731oY9mOJMw"
         }
       ],
       "services": {

@@ -108,7 +108,7 @@ public class AttractionsAdapter extends RecyclerView.Adapter<AttractionsAdapter.
             holder.binding.scoreTxt.setText(String.format("%.1f", currentItem.getScore()));
             holder.binding.imageView6.setVisibility(View.VISIBLE);
         } else {
-            holder.binding.scoreTxt.setText("Нет отзывов"); // Если рейтинг равен 0
+            holder.binding.scoreTxt.setText("Нет отзывов");
             holder.binding.imageView6.setVisibility(View.GONE);
         }
 
