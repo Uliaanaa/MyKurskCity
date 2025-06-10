@@ -450,7 +450,7 @@ public class Detail_RouteActivity extends BaseActivity {
 
         binding.allbtn.setOnClickListener(v -> {
             Intent intent = new Intent(this, ReviewsActivity.class);
-            intent.putExtra("productId", object.getId());
+            intent.putExtra("productId", object.getTitle());
             startActivity(intent);
         });
 
