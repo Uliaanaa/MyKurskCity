@@ -1,7 +1,6 @@
 package com.solovinykray.solovinyykray.Activity;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -10,19 +9,21 @@ import android.os.Handler;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.webkit.WebChromeClient;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 
 import com.bumptech.glide.Glide;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,14 +34,22 @@ import com.solovinykray.solovinyykray.Domain.Review;
 import com.solovinyykray.solovinyykray.R;
 import com.solovinyykray.solovinyykray.databinding.ActivityDetailRouteBinding;
 
-
 import java.io.IOException;
 import java.util.Locale;
 
+/**
+ * Активность для отображения детальной информации о маршруте.
+ * Реализует функции:
+ * - Воспроизведение аудио-описания маршрута
+ * - Встраивание видео из VK
+ * - Управление избранными маршрутами
+ * - Отображение рейтинга и отзывов
+ * - Навигация на карту маршрута
+ */
 public class Detail_RouteActivity extends BaseActivity {
     private ActivityDetailRouteBinding binding;
     private ItemRoute object;
-    private boolean isFavorite;
+    private boolean isFavorite = false;
     private MediaPlayer mediaPlayer;
     private boolean isPrepared = false;
     private Handler handler = new Handler();
@@ -49,6 +58,7 @@ public class Detail_RouteActivity extends BaseActivity {
     private LinearLayout audioContainer;
     private ProgressBar audioProgress;
     private TextView videoTitle;
+    private ValueEventListener favoriteListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,13 +71,6 @@ public class Detail_RouteActivity extends BaseActivity {
         audioContainer = binding.audioContainer;
         audioProgress = binding.audioProgress;
         videoTitle = binding.videoTitle;
-        updateFavoriteIcon();
-
-        binding.favIcon.setOnClickListener(v -> {
-            isFavorite = !isFavorite;
-            updateFavoriteIcon();
-            saveFavoriteStatus();
-        });
 
         getIntentExtra();
         setVariable();
@@ -77,30 +80,103 @@ public class Detail_RouteActivity extends BaseActivity {
         setupVkVideoPlayer();
     }
 
-    private void updateFavoriteIcon() {
-        if (isFavorite) {
-            binding.favIcon.setImageResource(R.drawable.fav);
-        } else {
-            binding.favIcon.setImageResource(R.drawable.fav_icon);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        releaseMediaPlayer();
+        if (binding.vkWebView != null) {
+            binding.vkWebView.stopLoading();
+            binding.vkWebView.destroy();
+        }
+        if (favoriteListener != null && object != null && object.getId() != null) {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null) {
+                String uid = user.getUid();
+                DatabaseReference favoritesRef = FirebaseDatabase.getInstance()
+                        .getReference("Favorites")
+                        .child(uid)
+                        .child("Routes")
+                        .child(object.getId());
+                favoritesRef.removeEventListener(favoriteListener);
+            }
         }
     }
 
     /**
-     * Сохраняет статус избранного в SharedPreferences.
+     * Обновляет иконку избранного состояния на основе текущего статуса.
+     * Использует разные ресурсы для отображения состояния "в избранном" и "не в избранном".
      */
-
-
-    private void saveFavoriteStatus() {
-        SharedPreferences prefs = getSharedPreferences("Favorites", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean("favorite_" + object.getTitle(), isFavorite);
-        editor.apply();
+    private void updateFavoriteIcon() {
+        binding.favIcon.setImageResource(isFavorite ? R.drawable.fav : R.drawable.fav_icon);
     }
 
     /**
-     * Настраивает элементы интерфейса для работы с аудиоплеером.
-     * Проверяет наличие аудиофайла и инициализирует MediaPlayer при его наличии.
-     * Устанавливает обработчики событий для кнопки воспроизведения/паузы и ползунка прогресса.
+     * Переключает статус избранного для текущего маршрута.
+     * Выполняет запись/удаление из Firebase Realtime Database.
+     * Требует авторизации пользователя. При отсутствии авторизации перенаправляет на экран логина.
+     */
+    private void toggleFavoriteStatus() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || object.getId() == null || object.getId().isEmpty()) {
+            Toast.makeText(this, "Ошибка: идентификатор маршрута отсутствует", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String uid = user.getUid();
+        DatabaseReference favoritesRef = FirebaseDatabase.getInstance()
+                .getReference("Favorites")
+                .child(uid)
+                .child("Routes")
+                .child(object.getId());
+
+        isFavorite = !isFavorite;
+        if (isFavorite) {
+            favoritesRef.setValue(true);
+        } else {
+            favoritesRef.removeValue();
+        }
+        updateFavoriteIcon();
+    }
+
+    /**
+     * Загружает статус избранного для текущего маршрута из Firebase.
+     * Устанавливает начальное состояние иконки. Регистрирует слушатель для отслеживания изменений в реальном времени.
+     */
+    private void loadFavoriteStatus() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null || object.getId() == null || object.getId().isEmpty()) {
+            isFavorite = false;
+            updateFavoriteIcon();
+            return;
+        }
+
+        String uid = user.getUid();
+        DatabaseReference favoritesRef = FirebaseDatabase.getInstance()
+                .getReference("Favorites")
+                .child(uid)
+                .child("Routes")
+                .child(object.getId());
+
+        favoriteListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                isFavorite = snapshot.exists();
+                updateFavoriteIcon();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                isFavorite = false;
+                updateFavoriteIcon();
+            }
+        };
+        favoritesRef.addValueEventListener(favoriteListener);
+    }
+
+    /**
+     * Инициализирует аудиоплеер для воспроизведения аудио-описания маршрута.
+     * Проверяет наличие валидной ссылки на аудиофайл в Firebase Storage.
+     * Настраивает элементы управления: кнопку play/pause и seekbar.
      */
     private void setupAudioPlayer() {
         binding.audioContainer.setVisibility(View.GONE);
@@ -109,12 +185,7 @@ public class Detail_RouteActivity extends BaseActivity {
             if (isValidFirebaseStorageUrl(object.getAudioToken())) {
                 binding.audioContainer.setVisibility(View.VISIBLE);
                 initMediaPlayer(object.getAudioToken());
-                Log.d("AudioDebug", "Используем аудио из Firebase Storage: " + object.getAudioToken());
-            } else {
-                Log.d("AudioDebug", "Аудио ссылка не является валидным Firebase Storage URL");
             }
-        } else {
-            Log.d("AudioDebug", "Аудио токен отсутствует");
         }
 
         binding.playPauseBtn.setOnClickListener(v -> {
@@ -144,32 +215,31 @@ public class Detail_RouteActivity extends BaseActivity {
     }
 
     /**
-     * Проверяет, является ли переданный URL валидной ссылкой Firebase Storage.
-     * @param url Строка с URL для проверки
-     * @return true если URL является валидной ссылкой Firebase Storage, иначе false
+     * Проверяет, является ли URL валидной ссылкой Firebase Storage.
+     *
+     * @param url Проверяемый URL
+     * @return true если URL соответствует формату Firebase Storage, иначе false
      */
     private boolean isValidFirebaseStorageUrl(String url) {
         return url != null && url.startsWith("https://firebasestorage.googleapis.com/");
     }
 
     /**
-     * Настраивает WebView для воспроизведения видео с VK Video.
+     * Настраивает WebView для встраивания видео из VK.
+     * Парсит исходный URL видео и преобразует в embed-формат.
+     * Обрабатывает ошибки загрузки и скрывает элементы при отсутствии видео.
      */
     private void setupVkVideoPlayer() {
         String videoUrl = object.getVideoUrl();
-
         if (videoUrl == null || videoUrl.isEmpty()) {
-            Log.d("VkVideoDebug", "Ссылка на видео отсутствует");
             binding.vkWebView.setVisibility(View.GONE);
             binding.videoTitle.setVisibility(View.GONE);
             return;
         }
 
         String embedUrl = extractVkVideoEmbedUrl(videoUrl);
-        Log.d("VkVideoDebug", "Embed URL: " + embedUrl);
 
         if (embedUrl == null || embedUrl.isEmpty()) {
-            Log.e("VkVideoError", "Неверный формат VK Video ссылки: " + videoUrl);
             binding.vkWebView.setVisibility(View.GONE);
             binding.videoTitle.setVisibility(View.GONE);
             return;
@@ -189,34 +259,28 @@ public class Detail_RouteActivity extends BaseActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                Log.d("VkVideoDebug", "Страница загружена: " + url);
                 binding.audioProgress.setVisibility(View.GONE);
             }
 
             @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                Log.e("VkVideoError", "Ошибка загрузки WebView: " + description);
                 binding.vkWebView.setVisibility(View.GONE);
                 binding.videoTitle.setVisibility(View.GONE);
             }
         });
 
-        Log.d("VkVideoDebug", "Загружаем embed URL: " + embedUrl);
         binding.audioProgress.setVisibility(View.VISIBLE);
         binding.vkWebView.loadUrl(embedUrl);
-
         pauseAudio();
     }
 
     /**
-     * Извлекает embed-URL для VK Video из предоставленной ссылки.
-     * Поддерживает форматы:
-     * - https://vkvideo.ru/video-21665793_456242598
-     * - https://vk.com/video-21665793_456242598
-     * - https://vk.com/video_ext.php?oid=-21665793&id=456242598&hd=2&autoplay=1
-     * @param url Ссылка на видео VK
-     * @return Embed-URL для WebView или null, если ссылка неверная
+     * Преобразует стандартный URL видео VK в embed-формат для встраивания.
+     * Поддерживает различные форматы VK-ссылок.
+     *
+     * @param url Оригинальный URL видео
+     * @return Embed URL для встраивания или null при ошибке парсинга
      */
     private String extractVkVideoEmbedUrl(String url) {
         try {
@@ -228,11 +292,9 @@ public class Detail_RouteActivity extends BaseActivity {
                 String oid = uri.getQueryParameter("oid");
                 String id = uri.getQueryParameter("id");
                 if (oid != null && id != null) {
-                    // Формируем чистый embed-URL с автозапуском
                     return "https://vk.com/video_ext.php?oid=" + oid + "&id=" + id + "&hd=2&autoplay=1";
                 }
-            }
-            else if (host.contains("vk.com") || host.contains("vkvideo.ru")) {
+            } else if (host.contains("vk.com") || host.contains("vkvideo.ru")) {
                 if (path.startsWith("/video")) {
                     String videoId = path.replace("/video", "");
                     if (videoId.contains("?")) {
@@ -243,17 +305,17 @@ public class Detail_RouteActivity extends BaseActivity {
                     }
                 }
             }
-            Log.e("VkVideoParseError", "Неверный формат URL: " + url);
             return null;
         } catch (Exception e) {
-            Log.e("VkVideoParseError", "Ошибка парсинга: " + url, e);
             return null;
         }
     }
 
     /**
-     * Инициализирует MediaPlayer для воспроизведения аудио по указанному URL.
-     * Устанавливает обработчики событий подготовки, завершения и ошибок воспроизведения.
+     * Инициализирует MediaPlayer для воспроизведения аудио.
+     * Выполняет асинхронную подготовку плеера. Обновляет UI при готовности.
+     * Обрабатывает ошибки инициализации и воспроизведения.
+     *
      * @param audioUrl URL аудиофайла для воспроизведения
      */
     private void initMediaPlayer(String audioUrl) {
@@ -271,7 +333,6 @@ public class Detail_RouteActivity extends BaseActivity {
                 binding.playPauseBtn.setEnabled(true);
                 binding.seekBar.setMax(mediaPlayer.getDuration());
                 updateSeekBar();
-                Log.d("AudioDebug", "Аудио успешно подготовлено");
             });
 
             mediaPlayer.setOnCompletionListener(mp -> {
@@ -280,21 +341,20 @@ public class Detail_RouteActivity extends BaseActivity {
             });
 
             mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                Log.e("AudioError", "Ошибка воспроизведения: " + what + ", " + extra);
                 binding.audioContainer.setVisibility(View.GONE);
                 return true;
             });
 
             mediaPlayer.prepareAsync();
         } catch (IOException e) {
-            Log.e("AudioError", "Ошибка инициализации аудио", e);
             binding.audioContainer.setVisibility(View.GONE);
         }
     }
 
     /**
-     * Обновляет положение ползунка воспроизведения и отображаемое время.
-     * Вызывается периодически во время воспроизведения аудио.
+     * Обновляет позицию SeekBar в соответствии с прогрессом воспроизведения.
+     * Форматирует и отображает текущее время трека.
+     * Рекурсивно вызывает себя при активном воспроизведении.
      */
     private void updateSeekBar() {
         if (mediaPlayer != null) {
@@ -309,7 +369,8 @@ public class Detail_RouteActivity extends BaseActivity {
     }
 
     /**
-     * Форматирует время в миллисекундах в строку формата "мм:сс".
+     * Форматирует миллисекунды в читаемый вид (MM:SS).
+     *
      * @param milliseconds Время в миллисекундах
      * @return Отформатированная строка времени
      */
@@ -320,8 +381,8 @@ public class Detail_RouteActivity extends BaseActivity {
     }
 
     /**
-     * Начинает воспроизведение аудио, если MediaPlayer инициализирован и подготовлен.
-     * Обновляет иконку кнопки воспроизведения и запускает обновление ползунка.
+     * Начинает воспроизведение аудио.
+     * Обновляет иконку кнопки на "паузу" и запускает обновление SeekBar.
      */
     private void playAudio() {
         if (mediaPlayer != null) {
@@ -332,8 +393,8 @@ public class Detail_RouteActivity extends BaseActivity {
     }
 
     /**
-     * Приостанавливает воспроизведение аудио, если MediaPlayer активен.
-     * Обновляет иконку кнопки воспроизведения.
+     * Приостанавливает воспроизведение аудио.
+     * Обновляет иконку кнопки на "воспроизведение".
      */
     private void pauseAudio() {
         if (mediaPlayer != null) {
@@ -342,19 +403,9 @@ public class Detail_RouteActivity extends BaseActivity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        releaseMediaPlayer();
-        if (binding.vkWebView != null) {
-            binding.vkWebView.stopLoading();
-            binding.vkWebView.destroy();
-        }
-    }
-
     /**
-     * Освобождает ресурсы MediaPlayer при уничтожении активности.
-     * Удаляет все pending callback'и Handler'а.
+     * Освобождает ресурсы MediaPlayer и останавливает обработчики обновления.
+     * Вызывается при уничтожении активности для предотвращения утечек ресурсов.
      */
     private void releaseMediaPlayer() {
         if (mediaPlayer != null) {
@@ -365,61 +416,74 @@ public class Detail_RouteActivity extends BaseActivity {
     }
 
     /**
-     * Настраивает переменные и элементы интерфейса,
-     * устанавливает обработчики событий для кнопок.
+     * Включает иммерсивный режим для полноэкранного отображения.
+     * Скрывает системную навигацию и панель состояния.
+     */
+    private void enableImmersiveMode() {
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        decorView.setSystemUiVisibility(uiOptions);
+    }
+
+    /**
+     * Инициализирует UI элементы и обработчики событий.
+     * Устанавливает заголовок, рейтинг, изображение маршрута.
+     * Настраивает слушатели для кнопок: назад, избранное, отзывы, карта.
      */
     private void setVariable() {
         binding.titleTxt.setText(object.getTitle());
         binding.ratingBar.setRating((float) object.getScore());
 
-        Glide.with(Detail_RouteActivity.this)
-                .load(object.getPic())
-                .into(binding.pic);
+        Glide.with(this).load(object.getPic()).into(binding.pic);
 
         binding.backBtn.setOnClickListener(v -> finish());
 
+        binding.favIcon.setOnClickListener(v -> {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) {
+                Toast.makeText(this, "Войдите в систему, чтобы добавить в избранное", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, LoginActivity.class));
+                return;
+            }
+            toggleFavoriteStatus();
+        });
+
         binding.allbtn.setOnClickListener(v -> {
-            Intent intent = new Intent(Detail_RouteActivity.this, ReviewsActivity.class);
-            intent.putExtra("productId", object.getTitle());
+            Intent intent = new Intent(this, ReviewsActivity.class);
+            intent.putExtra("productId", object.getId());
             startActivity(intent);
         });
 
         binding.addToCartBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(Detail_RouteActivity.this, MapActivity.class);
+            Intent intent = new Intent(this, MapActivity.class);
             intent.putExtra("object", object);
             startActivity(intent);
         });
 
         binding.descriptionTxt.setText(Html.fromHtml(object.getDetail(), Html.FROM_HTML_MODE_LEGACY));
-
-        if (isFavorite) {
-            binding.favIcon.setImageResource(R.drawable.fav);
-        } else {
-            binding.favIcon.setImageResource(R.drawable.fav_icon);
-        }
     }
 
     /**
-     * Скрывает системную навигацию (включает иммерсивный режим).
-     */
-    private void enableImmersiveMode() {
-        View decorView = getWindow().getDecorView();
-        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-        decorView.setSystemUiVisibility(uiOptions);
-    }
-
-    /**
-     * Получает объект маршрута из Intent, загружает его статус избранного.
+     * Получает объект маршрута из интента.
+     * Проверяет валидность объекта и его ID.
+     * Запускает загрузку статуса избранного.
      */
     private void getIntentExtra() {
         object = (ItemRoute) getIntent().getSerializableExtra("object");
-        isFavorite = getIntent().getBooleanExtra("isFavorite", false);
+        if (object == null) {
+            Toast.makeText(this, "Ошибка: данные о маршруте отсутствуют", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+        if (object.getId() == null || object.getId().isEmpty()) {
+            Toast.makeText(this, "Ошибка: идентификатор маршрута отсутствует", Toast.LENGTH_SHORT).show();
+        }
+        loadFavoriteStatus();
     }
 
     /**
-     * Загружает отзывы из Firebase и на их основе высчитывает рейтинг достопримечательности,
-     * в соотвествии с рейтингом обновляет RatingBar.
+     * Загружает отзывы из Firebase и вычисляет средний рейтинг маршрута.
+     * Обновляет рейтинг в UI и сохраняет расчетное значение в объекте маршрута.
      */
     private void loadAndCalculateRating() {
         String productId = object.getTitle();

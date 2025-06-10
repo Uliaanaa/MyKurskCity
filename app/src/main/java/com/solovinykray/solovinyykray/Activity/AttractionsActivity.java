@@ -196,6 +196,7 @@ public class AttractionsActivity extends BaseActivity {
                     for (DataSnapshot issue : snapshot.getChildren()) {
                         ItemAttractions item = issue.getValue(ItemAttractions.class);
                         if (item != null) {
+                            item.setId(issue.getKey()); // Устанавливаем id как ключ из Firebase
                             if (index < 38 || "approved".equals(item.getStatus())) {
                                 list.add(item);
                             }

@@ -120,6 +120,7 @@ public class ExplorerActivity extends BaseActivity {
                     for (DataSnapshot issue : snapshot.getChildren()) {
                         ItemRoute item = issue.getValue(ItemRoute.class);
                         if (item != null) {
+                            item.setId(issue.getKey());
                             list.add(item);
                         }
                     }

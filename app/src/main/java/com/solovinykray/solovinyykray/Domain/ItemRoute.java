@@ -1,15 +1,16 @@
 package com.solovinykray.solovinyykray.Domain;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Класс, представляющий маршрут
- * Содержит информацию о маршруте и  координатах точек маршрута.
- * Реализует интерфейс Serializable для передачи между компонентами приложения.
+ * Класс представляет маршрут в приложении, содержащий информацию о туре, такую как название,
+ * адрес, описание, цена, гид, координаты и мультимедийные данные. Реализует интерфейс
+ * {@link Serializable} для передачи объектов между активностями или сохранения состояния.
  */
-
 public class ItemRoute implements Serializable {
+    private String id;
     private String title;
     private String address;
     private String description;
@@ -29,6 +30,18 @@ public class ItemRoute implements Serializable {
     private String audioToken;
     private String videoUrl;
 
+    public ItemRoute() {
+        this.points = new ArrayList<>();
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getVideoUrl() {
         return videoUrl;
     }
@@ -43,8 +56,6 @@ public class ItemRoute implements Serializable {
 
     public void setAudioToken(String audioToken) {
         this.audioToken = audioToken;
-    }
-    public ItemRoute() {
     }
 
     public String getTitle() {
@@ -172,11 +183,7 @@ public class ItemRoute implements Serializable {
     }
 
     public void setPoints(List<List<Double>> points) {
-        this.points = points;
-    }
-
-    public List<List<Double>> getCoordinates() {
-        return points;
+        this.points = points != null ? points : new ArrayList<>();
     }
 
     public void addCoordinate(double latitude, double longitude) {

@@ -1,8 +1,6 @@
 package com.solovinykray.solovinyykray.Activity;
 
-
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
@@ -12,29 +10,34 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.bumptech.glide.Glide;
-import com.solovinykray.solovinyykray.Domain.ItemAttractions;
-import com.solovinykray.solovinyykray.Domain.Review;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.solovinykray.solovinyykray.Domain.ItemAttractions;
+import com.solovinykray.solovinyykray.Domain.Review;
 import com.solovinyykray.solovinyykray.R;
 import com.solovinyykray.solovinyykray.databinding.ActivityDetailAttractionBinding;
 
+
 /**
  * Активность для просмотра детальной информации о достопримечательности,
- * позволяет просмотреть описание, адрес, тип достопримечательности, рейтнг изображения и отзывы.
+ * позволяет просмотреть описание, адрес, тип достопримечательности, рейтинг, изображения и отзывы.
  * Поддерживает функцию добавления в избранное, переход к карте и переход к разделу с отзывами.
  */
-
 public class Detail_AttractionActivity extends BaseActivity {
     private ActivityDetailAttractionBinding binding;
     private ItemAttractions object;
     private boolean isFavorite = false;
-    String l="",w="";
+    String l = "", w = "";
     private TextView videoTitle;
 
     /**
@@ -42,13 +45,11 @@ public class Detail_AttractionActivity extends BaseActivity {
      * настраивает интерфейс и загружает рейтинг.
      * @param savedInstanceState Сохраненное состояние активности (может быть null)
      */
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityDetailAttractionBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
 
         getIntentExtra();
         setVariable();
@@ -56,8 +57,6 @@ public class Detail_AttractionActivity extends BaseActivity {
         enableImmersiveMode();
         setupVkVideoPlayer();
     }
-
-
 
     /**
      * Настраивает WebView для воспроизведения видео с VK Video.
@@ -110,8 +109,6 @@ public class Detail_AttractionActivity extends BaseActivity {
 
         Log.d("VkVideoDebug", "Загружаем embed URL: " + embedUrl);
         binding.vkWebView.loadUrl(embedUrl);
-
-
     }
 
     /**
@@ -133,11 +130,9 @@ public class Detail_AttractionActivity extends BaseActivity {
                 String oid = uri.getQueryParameter("oid");
                 String id = uri.getQueryParameter("id");
                 if (oid != null && id != null) {
-                    // Формируем чистый embed-URL с автозапуском
                     return "https://vk.com/video_ext.php?oid=" + oid + "&id=" + id + "&hd=2&autoplay=1";
                 }
-            }
-            else if (host.contains("vk.com") || host.contains("vkvideo.ru")) {
+            } else if (host.contains("vk.com") || host.contains("vkvideo.ru")) {
                 if (path.startsWith("/video")) {
                     String videoId = path.replace("/video", "");
                     if (videoId.contains("?")) {
@@ -156,10 +151,9 @@ public class Detail_AttractionActivity extends BaseActivity {
         }
     }
 
-     /**
+    /**
      * Скрывает системную навигацию (включает иммерсивный режим).
      */
-
     private void enableImmersiveMode() {
         View decorView = getWindow().getDecorView();
         int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -171,15 +165,14 @@ public class Detail_AttractionActivity extends BaseActivity {
      * Настраивает переменные и элементы интерфейса,
      * устанавливает обработчики событий для кнопок.
      */
-
     private void setVariable() {
         binding.titleTxt.setText(object.getTitle());
         binding.adressTxt.setText(object.getAddress());
         binding.descriptionTxt.setText(Html.fromHtml(object.getDescription(), Html.FROM_HTML_MODE_LEGACY));
         binding.bedTxt.setText(object.getBed());
         binding.ratingBar.setRating((float) object.getScore());
-        l=object.getLongitude();
-        w=object.getWidth();
+        l = object.getLongitude();
+        w = object.getWidth();
 
         Glide.with(Detail_AttractionActivity.this)
                 .load(object.getPic())
@@ -187,9 +180,13 @@ public class Detail_AttractionActivity extends BaseActivity {
 
         binding.backBtn.setOnClickListener(v -> finish());
 
-        updateFavoriteIcon();
-
         binding.favIcon.setOnClickListener(v -> {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) {
+                Toast.makeText(this, "Войдите в систему, чтобы добавить в избранное", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(Detail_AttractionActivity.this, LoginActivity.class));
+                return;
+            }
             isFavorite = !isFavorite;
             updateFavoriteIcon();
             saveFavoriteStatus();
@@ -202,10 +199,9 @@ public class Detail_AttractionActivity extends BaseActivity {
         });
 
         binding.addToCartBtn.setOnClickListener(v -> {
-
             Intent intent = new Intent(Detail_AttractionActivity.this, MapRouteActivity.class);
-            intent.putExtra("l",l);
-            intent.putExtra("w",w);
+            intent.putExtra("l", l);
+            intent.putExtra("w", w);
             startActivity(intent);
         });
     }
@@ -213,7 +209,6 @@ public class Detail_AttractionActivity extends BaseActivity {
     /**
      * Обновляет иконку избранного в зависимости от текущего статуса.
      */
-
     private void updateFavoriteIcon() {
         if (isFavorite) {
             binding.favIcon.setImageResource(R.drawable.fav);
@@ -223,29 +218,73 @@ public class Detail_AttractionActivity extends BaseActivity {
     }
 
     /**
-     * Сохраняет статус избранного в SharedPreferences.
+     * Сохраняет статус избранного в Firebase.
      */
-
     private void saveFavoriteStatus() {
-        SharedPreferences prefs = getSharedPreferences("Favorites", MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean("favorite_" + object.getTitle(), isFavorite);
-        editor.apply();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            return;
+        }
+        String uid = user.getUid();
+        DatabaseReference favoritesRef = FirebaseDatabase.getInstance()
+                .getReference("Favorites")
+                .child(uid)
+                .child("Attractions")
+                .child(object.getId()); // Используем ID достопримечательности
+
+        if (isFavorite) {
+            favoritesRef.setValue(true)
+                    .addOnSuccessListener(aVoid -> Log.d("Firebase", "Достопримечательность добавлена в избранное"))
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Ошибка сохранения: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("Firebase", "Ошибка сохранения избранного: ", e);
+                    });
+        } else {
+            favoritesRef.removeValue()
+                    .addOnSuccessListener(aVoid -> Log.d("Firebase", "Достопримечательность удалена из избранного"))
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Ошибка удаления: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("Firebase", "Ошибка удаления избранного: ", e);
+                    });
+        }
     }
 
     /**
-     * Загружает статус избранного из SharedPreferences.
+     * Загружает статус избранного из Firebase.
      */
-
     private void loadFavoriteStatus() {
-        SharedPreferences prefs = getSharedPreferences("Favorites", MODE_PRIVATE);
-        isFavorite = prefs.getBoolean("favorite_" + object.getTitle(), false);
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            isFavorite = false;
+            updateFavoriteIcon();
+            return;
+        }
+        String uid = user.getUid();
+        DatabaseReference favoritesRef = FirebaseDatabase.getInstance()
+                .getReference("Favorites")
+                .child(uid)
+                .child("Attractions")
+                .child(object.getId());
+
+        favoritesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                isFavorite = snapshot.exists();
+                updateFavoriteIcon();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e("Firebase", "Ошибка загрузки статуса избранного: " + error.getMessage());
+                isFavorite = false;
+                updateFavoriteIcon();
+            }
+        });
     }
 
     /**
      * Получает объект достопримечательности из Intent, загружает его статус избранного.
      */
-
     private void getIntentExtra() {
         object = (ItemAttractions) getIntent().getSerializableExtra("object");
         loadFavoriteStatus();
@@ -253,16 +292,15 @@ public class Detail_AttractionActivity extends BaseActivity {
 
     /**
      * Загружает отзывы из Firebase и на их основе высчитывает рейтинг достопримечательности,
-     * в соотвествии с рейтингом обновляет RatingBar.
+     * в соответствии с рейтингом обновляет RatingBar.
      */
-
     private void loadAndCalculateRating() {
         String productId = object.getTitle();
 
         DatabaseReference reviewsRef = FirebaseDatabase.getInstance().getReference("reviews");
         reviewsRef.orderByChild("productId").equalTo(productId).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 double totalRating = 0;
                 int reviewCount = 0;
 
@@ -283,12 +321,9 @@ public class Detail_AttractionActivity extends BaseActivity {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
                 Log.e("FirebaseError", "Ошибка загрузки отзывов: " + databaseError.getMessage());
             }
         });
     }
-
-
-
 }
