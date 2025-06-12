@@ -57,7 +57,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Поддерживает отображение пешеходных и автомобильных маршрутов с расчетом времени и расстояния.
  */
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback, RouteListener {
-
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 100;
     private FusedLocationProviderClient fusedLocationProviderClient;
     private GoogleMap map;
@@ -76,6 +75,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private ProgressBar centerProgressBar;
     private AbstractRouting.TravelMode currentTravelMode = AbstractRouting.TravelMode.DRIVING;
     private Button btnDriving, btnWalking;
+    private RouteDrawing carRoute, walkRoute, singleRoute;
 
     /**
      * Инициализация активности. Получает данные маршрута или точек, подготавливает карту и UI.
@@ -120,6 +120,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         SupportMapFragment fragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapView);
         if (fragment != null) {
             fragment.getMapAsync(this);
+        } else {
+            Toast.makeText(this, "Ошибка инициализации карты", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
 
         dialog = new ProgressDialog(this);
@@ -129,6 +133,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             currentTravelMode = AbstractRouting.TravelMode.DRIVING;
             if (userLocation != null) {
                 clearRouteAndRecalculate();
+            } else {
+                Toast.makeText(this, "Геолокация недоступна, выберите тип маршрута позже", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -136,10 +142,67 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             currentTravelMode = AbstractRouting.TravelMode.WALKING;
             if (userLocation != null) {
                 clearRouteAndRecalculate();
+            } else {
+                Toast.makeText(this, "Геолокация недоступна, выберите тип маршрута позже", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    /**
+     * Очищает ресурсы при уничтожении активности.
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        clearPolylines();
+        if (carRoute != null) {
+            carRoute.cancel(true);
+            carRoute = null;
+        }
+        if (walkRoute != null) {
+            walkRoute.cancel(true);
+            walkRoute = null;
+        }
+        if (singleRoute != null) {
+            singleRoute.cancel(true);
+            singleRoute = null;
+        }
+        if (map != null) {
+            map.clear();
+            map = null;
+        }
+        fusedLocationProviderClient = null;
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+            dialog = null;
+        }
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+        }
+        if (centerProgressBar != null) {
+            centerProgressBar.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Центрирует карту на первой точке маршрута, если геолокация недоступна.
+     */
+    private void centerMapOnFirstWaypoint() {
+        if (map != null && !waypoints.isEmpty()) {
+            CameraPosition cameraPosition = new CameraPosition.Builder()
+                    .target(waypoints.get(0))
+                    .zoom(12)
+                    .build();
+            map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+        }
+        Toast.makeText(this, "Геолокация недоступна, отображена начальная точка маршрута", Toast.LENGTH_SHORT).show();
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+        }
+        if (centerProgressBar != null) {
+            centerProgressBar.setVisibility(View.GONE);
+        }
+    }
 
     /**
      * Очищает текущие маршруты и инициирует пересчет маршрута в зависимости от текущего типа передвижения.
@@ -159,7 +222,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private void clearPolylines() {
         if (polylines != null) {
             for (Polyline line : polylines) {
-                line.remove();
+                if (line != null) {
+                    line.remove();
+                }
             }
             polylines.clear();
         }
@@ -176,7 +241,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         List<List<Double>> points = itemRoute.getPoints();
         if (points != null && !points.isEmpty()) {
             for (List<Double> point : points) {
-                if (point != null && point.size() == 2) {
+                if (point != null && point.size() >= 2) {
                     coordinates.add(new LatLng(point.get(0), point.get(1)));
                 }
             }
@@ -186,39 +251,35 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
 
     /**
      * Получает список координат из выбранных достопримечательностей.
-     *
-     * @param items список объектов достопримечательностей
-     * @return список координат
      */
     private ArrayList<LatLng> getCoordinatesFromItems(ArrayList<ItemAttractions> items) {
         ArrayList<LatLng> coordinates = new ArrayList<>();
         for (ItemAttractions item : items) {
-            coordinates.add(new LatLng(Double.parseDouble(item.getWidth()), Double.parseDouble(item.getLongitude())));
+            try {
+                coordinates.add(new LatLng(
+                        Double.parseDouble(item.getWidth()),
+                        Double.parseDouble(item.getLongitude())
+                ));
+            } catch (NumberFormatException e) {
+                Log.e("MapActivity", "Неверные координаты для " + item.getTitle());
+            }
         }
         return coordinates;
     }
 
     /**
      * Определяет тип маршрута (пешеходный или автомобильный) на основе общей длины.
-     *
-     * @param waypoints список координат маршрута
-     * @return строка: "Пешеходный" или "Автомобильный"
      */
     private String calculateRouteType(ArrayList<LatLng> waypoints) {
         double totalDistance = 0;
         for (int i = 1; i < waypoints.size(); i++) {
             totalDistance += calculateDistance(waypoints.get(i - 1), waypoints.get(i));
         }
-        return (totalDistance > 5000) ? "Автомобильный" : "Пешеходный";
+        return totalDistance > 5000 ? "Автомобильный" : "Пешеходный";
     }
-
 
     /**
      * Вычисляет расстояние между двумя координатами в метрах.
-     *
-     * @param start начальная точка
-     * @param end конечная точка
-     * @return расстояние в метрах
      */
     private double calculateDistance(LatLng start, LatLng end) {
         float[] results = new float[1];
@@ -229,22 +290,23 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     /**
      * Callback, вызываемый после готовности карты Google.
      * Запрашивает разрешения, отображает маркеры и загружает маршрут.
-     *
-     * @param googleMap объект карты
      */
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            map.setMyLocationEnabled(true);
-            map.getUiSettings().setZoomControlsEnabled(true);
-
+        if (map != null && !waypoints.isEmpty()) {
             for (LatLng point : waypoints) {
                 map.addMarker(new MarkerOptions().position(point).icon(setIcon(this, R.drawable.baseline_location_on_24)));
             }
+            centerMapOnFirstWaypoint();
+        }
 
+        map.getUiSettings().setZoomControlsEnabled(true);
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            map.setMyLocationEnabled(true);
             fetchMyLocation();
         } else {
             ActivityCompat.requestPermissions(this,
@@ -254,17 +316,37 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     }
 
     /**
+     * Обрабатывает результат запроса разрешений.
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && map != null) {
+                    map.setMyLocationEnabled(true);
+                    fetchMyLocation();
+                }
+            } else {
+                centerMapOnFirstWaypoint();
+            }
+        }
+    }
+
+    /**
      * Получает текущее местоположение пользователя и инициирует построение маршрута.
      */
     private void fetchMyLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            centerMapOnFirstWaypoint();
             return;
         }
 
         Task<Location> task = fusedLocationProviderClient.getLastLocation();
         task.addOnSuccessListener(location -> {
-            if (location != null) {
+            if (location != null && map != null) {
                 userLat = location.getLatitude();
                 userLong = location.getLongitude();
                 userLocation = new LatLng(userLat, userLong);
@@ -275,35 +357,39 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         .build();
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-                map.addMarker(new MarkerOptions().position(userLocation).icon(setIcon(this, R.drawable.baseline_location_on_24)));
+                map.addMarker(new MarkerOptions().position(userLocation)
+                        .icon(setIcon(this, R.drawable.baseline_location_on_24)));
 
                 getRoute(userLocation, waypoints.get(waypoints.size() - 1), waypoints);
             } else {
-                Toast.makeText(this, "Не удалось получить текущее местоположение", Toast.LENGTH_SHORT).show();
+                centerMapOnFirstWaypoint();
             }
+        }).addOnFailureListener(e -> {
+            Log.e("LocationError", "Ошибка получения местоположения: " + e.getMessage());
+            centerMapOnFirstWaypoint();
         });
     }
 
     /**
      * Построение маршрута между точками. В зависимости от расстояния до первой точки и типа маршрута
      * может быть построено два маршрута (например, сначала на машине, затем пешком).
-     *
-     * @param start координата старта
-     * @param end координата конца
-     * @param waypoints промежуточные точки
      */
     private void getRoute(LatLng start, LatLng end, ArrayList<LatLng> waypoints) {
-        dialog.setMessage("Маршрут генерируется, подождите пожалуйста");
-        progressBar.setVisibility(View.VISIBLE);
-        centerProgressBar.setVisibility(View.VISIBLE);
 
-        double distanceToFirstPoint = calculateDistance(start, waypoints.get(0));
+        if (progressBar != null) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+        if (centerProgressBar != null) {
+            centerProgressBar.setVisibility(View.VISIBLE);
+        }
 
-        if (bed.equals("Пешеходный") && distanceToFirstPoint > 4000) {
+        double distanceToFirstWaypoint = calculateDistance(start, waypoints.get(0));
+
+        if (bed.equals("Пешеходный") && distanceToFirstWaypoint > 4000) {
             ArrayList<LatLng> carPoints = new ArrayList<>();
             carPoints.add(start);
             carPoints.add(waypoints.get(0));
-            RouteDrawing carRoute = new RouteDrawing.Builder()
+            carRoute = new RouteDrawing.Builder()
                     .context(getApplicationContext())
                     .travelMode(AbstractRouting.TravelMode.DRIVING)
                     .withListener(this)
@@ -316,7 +402,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             walkPoints.add(waypoints.get(0));
             walkPoints.addAll(waypoints.subList(1, waypoints.size()));
             walkPoints.add(end);
-            RouteDrawing walkRoute = new RouteDrawing.Builder()
+            walkRoute = new RouteDrawing.Builder()
                     .context(getApplicationContext())
                     .travelMode(currentTravelMode)
                     .withListener(this)
@@ -329,27 +415,29 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             allPoints.add(start);
             allPoints.addAll(waypoints);
             allPoints.add(end);
-            RouteDrawing route = new RouteDrawing.Builder()
+            singleRoute = new RouteDrawing.Builder()
                     .context(getApplicationContext())
                     .travelMode(currentTravelMode)
                     .withListener(this)
                     .alternativeRoutes(true)
                     .waypoints(allPoints.toArray(new LatLng[0]))
                     .build();
-            route.execute();
+            singleRoute.execute();
         }
     }
 
-    /**
-     * Callback при неудачном построении маршрута.
-     *
-     * @param e объект ошибки
-     */
     @Override
     public void onRouteFailure(ErrorHandling e) {
-        progressBar.setVisibility(View.GONE);
-        centerProgressBar.setVisibility(View.GONE);
-        Toast.makeText(this, "Ошибка", Toast.LENGTH_SHORT).show();
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+        if (progressBar != null) {
+            progressBar.setVisibility(View.GONE);
+        }
+        if (centerProgressBar != null) {
+            centerProgressBar.setVisibility(View.GONE);
+        }
+        Toast.makeText(this, "Ошибка построения маршрута", Toast.LENGTH_SHORT).show();
         if (e != null) {
             Log.e("RouteError", "Ошибка: " + e.getMessage());
         } else {

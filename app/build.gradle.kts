@@ -12,7 +12,7 @@ android {
         applicationId = "com.solovinyykray.solovinyykray"
         minSdk = 24
         targetSdk = 34
-        versionCode = 10
+        versionCode = 12
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,7 +31,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release") // ВАЖНО: привязка подписки
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -90,7 +90,7 @@ dependencies {
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.google.maps.android:android-maps-utils:2.4.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.code.gson:gson:2.10.1") // оставляем один gson
+    implementation("com.google.code.gson:gson:2.10.1") 
     implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation ("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
 
