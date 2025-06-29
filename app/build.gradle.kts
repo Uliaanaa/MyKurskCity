@@ -12,7 +12,7 @@ android {
         applicationId = "com.solovinyykray.solovinyykray"
         minSdk = 24
         targetSdk = 34
-        versionCode = 12
+        versionCode = 13
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -93,6 +93,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1") 
     implementation("com.github.dhaval2404:imagepicker:2.1")
     implementation ("com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0")
+    implementation ("androidx.core:core:1.10.0")
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.8.0"))

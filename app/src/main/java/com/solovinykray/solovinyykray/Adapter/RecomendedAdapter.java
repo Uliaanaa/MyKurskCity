@@ -3,6 +3,7 @@ package com.solovinykray.solovinyykray.Adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -16,6 +17,7 @@ import com.solovinyykray.solovinyykray.databinding.ViewholderRecomendedBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Адаптер для отображения рекомендуемых достопримечательностей в RecyclerView.
@@ -58,7 +60,12 @@ public class RecomendedAdapter extends RecyclerView.Adapter<RecomendedAdapter.Vi
         ItemAttractions item = items.get(position);
         holder.binding.titleTxt.setText(item.getTitle());
         holder.binding.adressTxt.setText(item.getAddress());
-        holder.binding.scoreTxt.setText(String.valueOf(item.getScore()));
+
+        if (item.getScore() > 0) {
+            holder.binding.scoreTxt.setText(String.format(Locale.US, "%.1f", item.getScore()));
+        } else {
+            holder.binding.scoreTxt.setText("Нет отзывов");
+        }
 
         Glide.with(context)
                 .load(item.getPic())

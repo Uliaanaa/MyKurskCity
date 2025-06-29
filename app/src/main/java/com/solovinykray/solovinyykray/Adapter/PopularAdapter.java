@@ -3,6 +3,7 @@ package com.solovinykray.solovinyykray.Adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -16,6 +17,7 @@ import com.solovinyykray.solovinyykray.databinding.ViewholderPopularBinding;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Адаптер для отображения популярных маршрутов.
@@ -58,7 +60,14 @@ public class PopularAdapter extends RecyclerView.Adapter<PopularAdapter.Viewhold
         ItemRoute item = items.get(position);
         holder.binding.titleTxt.setText(item.getTitle());
         holder.binding.adressTxt.setText(item.getAddress());
-        holder.binding.scoreTxt.setText(String.valueOf(item.getScore()));
+
+        if (item.getScore() > 0) {
+            holder.binding.scoreTxt.setText(String.format(Locale.US, "%.1f", item.getScore()));
+            holder.binding.imageView6.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.scoreTxt.setText("Нет отзывов");
+            holder.binding.imageView6.setVisibility(View.GONE);
+        }
 
         Glide.with(context)
                 .load(item.getPic())

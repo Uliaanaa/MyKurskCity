@@ -160,29 +160,24 @@ public class MainActivity extends BaseActivity {
         boolean tutorialShown = prefs.getBoolean(KEY_TUTORIAL_SHOWN, false);
 
         if (!tutorialShown) {
-            // Показываем первую подсказку
             binding.tutorialOverlayTop.setVisibility(View.VISIBLE);
             binding.tutorialOverlayBottom.setVisibility(View.GONE);
 
-            // При клике на первую подсказку показываем вторую (возле меню)
             binding.tutorialOverlayTop.setOnClickListener(v -> {
                 binding.tutorialOverlayTop.setVisibility(View.GONE);
                 binding.tutorialOverlayBottom.setVisibility(View.VISIBLE);
             });
 
-            // При клике на вторую подсказку завершаем туториал
             binding.tutorialOverlayBottom.setOnClickListener(v -> {
                 completeTutorial(prefs);
             });
 
-            // Завершаем туториал при прокрутке ScrollView
             binding.scrollView2.setOnScrollChangeListener((View v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) -> {
                 if (scrollY != oldScrollY) {
                     completeTutorial(prefs);
                 }
             });
         } else {
-            // Если туториал уже показан, скрываем оба оверлея
             binding.tutorialOverlayTop.setVisibility(View.GONE);
             binding.tutorialOverlayBottom.setVisibility(View.GONE);
         }

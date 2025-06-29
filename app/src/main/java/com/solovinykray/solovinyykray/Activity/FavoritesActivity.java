@@ -206,7 +206,7 @@ public class FavoritesActivity extends BaseActivity {
                                         String productId = review.child("productId").getValue(String.class);
                                         Double rating = review.child("rating").getValue(Double.class);
 
-                                        if (productId != null && productId.equals(attraction.getId()) && rating != null) {
+                                        if (productId != null && productId.equals(attraction.getTitle()) && rating != null) {
                                             totalRating += rating;
                                             reviewCount++;
                                         }
@@ -303,7 +303,7 @@ public class FavoritesActivity extends BaseActivity {
                                         String productId = review.child("productId").getValue(String.class);
                                         Double rating = review.child("rating").getValue(Double.class);
 
-                                        if (productId != null && productId.equals(route.getId()) && rating != null) {
+                                        if (productId != null && productId.equals(route.getTitle()) && rating != null) {
                                             totalRating += rating;
                                             reviewCount++;
                                         }
